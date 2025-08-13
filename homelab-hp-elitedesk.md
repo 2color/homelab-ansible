@@ -1,0 +1,1 @@
+../notes/homelab-hp-elitedesk.md

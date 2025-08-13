@@ -1,0 +1,28 @@
+---
+- name: Configure HP EliteDesk Homelab Server
+  hosts: homelab-1
+  become: yes
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Set hostname
+      hostname:
+        name: homelab-1
+  
+  roles:
+    - geerlingguy.docker
+    - docker
+    - cockpit
+    - portainer
+    - sabnzbd
+    - plex
+
+  post_tasks:
+    - name: Display service URLs
+      debug:
+        msg: |
+          Services are now available at:
+          - Cockpit: https://{{ ansible_host }}:9090
+          - Portainer: http://{{ ansible_host }}:9000
+          - SABnzbd: http://{{ ansible_host }}:8080
+          - Plex: http://{{ ansible_host }}:32400/web
