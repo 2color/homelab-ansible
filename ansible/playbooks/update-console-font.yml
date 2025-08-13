@@ -1,0 +1,37 @@
+---
+- name: Update Console Font Size
+  hosts: homelab-1
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Read current console-setup configuration
+      slurp:
+        src: /etc/default/console-setup
+      register: console_setup_content
+
+    - name: Display current console-setup configuration
+      debug:
+        msg: "{{ (console_setup_content.content | b64decode).split('\n') }}"
+
+    - name: Update console font size to 16x32
+      lineinfile:
+        path: /etc/default/console-setup
+        regexp: '^#?FONTSIZE='
+        line: 'FONTSIZE="16x32"'
+        backup: yes
+      register: font_update
+
+    - name: Apply console font changes
+      command: setupcon
+      when: font_update.changed
+
+    - name: Verify font change was applied
+      command: showconsolefont
+      register: font_info
+      failed_when: false
+
+    - name: Display font information
+      debug:
+        var: font_info.stdout_lines
+      when: font_info.stdout_lines is defined

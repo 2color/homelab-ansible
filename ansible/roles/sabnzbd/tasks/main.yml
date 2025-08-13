@@ -1,0 +1,50 @@
+---
+- name: Create SABnzbd config directory
+  file:
+    path: /opt/docker-data/sabnzbd/config
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create SABnzbd downloads directory
+  file:
+    path: /opt/docker-data/sabnzbd/downloads
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create SABnzbd incomplete directory
+  file:
+    path: /opt/docker-data/sabnzbd/incomplete
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Deploy SABnzbd container
+  docker_container:
+    name: sabnzbd
+    image: lscr.io/linuxserver/sabnzbd:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "8080:8080"
+    env:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "{{ timezone | default('UTC') }}"
+    volumes:
+      - /opt/docker-data/sabnzbd/config:/config
+      - /opt/docker-data/sabnzbd/downloads:/downloads
+      - /opt/docker-data/sabnzbd/incomplete:/incomplete-downloads
+    networks:
+      - name: homelab-network
+
+- name: Allow SABnzbd through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: '8080'
+    proto: tcp
+  ignore_errors: yes

@@ -1,0 +1,19 @@
+---
+# Docker configuration
+docker_users:
+  - daniel
+
+docker_daemon_options:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "100m"
+    max-file: "3"
+
+# Timezone configuration
+timezone: "UTC"
+
+# Plex configuration
+plex_claim_token: "claim-yhVxKRMMMYQRacSeP-NX"  # Get from https://www.plex.tv/claim/
+
+# Firewall configuration
+enable_ufw: false

@@ -1,0 +1,23 @@
+---
+- name: Install Cockpit and plugins
+  apt:
+    name:
+      - cockpit
+      - cockpit-machines
+      - cockpit-networkmanager
+      - cockpit-storaged
+    state: present
+    update_cache: yes
+
+- name: Start and enable Cockpit service
+  systemd:
+    name: cockpit.socket
+    state: started
+    enabled: yes
+
+- name: Allow Cockpit through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: '9090'
+    proto: tcp
+  ignore_errors: yes

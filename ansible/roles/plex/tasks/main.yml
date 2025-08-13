@@ -1,0 +1,56 @@
+---
+- name: Create Plex config directory
+  file:
+    path: /opt/docker-data/plex/config
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create Plex transcode directory
+  file:
+    path: /opt/docker-data/plex/transcode
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+
+- name: Deploy Plex Media Server container
+  docker_container:
+    name: plex
+    image: lscr.io/linuxserver/plex:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "32400:32400"
+      - "1900:1900/udp"
+      - "3005:3005"
+      - "5353:5353/udp"
+      - "8324:8324"
+      - "32410:32410/udp"
+      - "32412:32412/udp"
+      - "32413:32413/udp"
+      - "32414:32414/udp"
+      - "32469:32469"
+    env:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "{{ timezone | default('UTC') }}"
+      VERSION: docker
+      PLEX_CLAIM: "{{ plex_claim_token | default('') }}"
+    volumes:
+      - /opt/docker-data/plex/config:/config
+      - /opt/docker-data/plex/transcode:/transcode
+      - /opt/docker-data/sabnzbd/downloads:/media
+    networks:
+      - name: homelab-network
+    devices:
+      - /dev/dri:/dev/dri  # For hardware transcoding if available
+
+- name: Allow Plex through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: '32400'
+    proto: tcp
+  ignore_errors: yes
