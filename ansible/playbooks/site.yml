@@ -17,12 +17,14 @@
     - sabnzbd
     - plex
     - ytdl-sub
+    - homelab-dashboard
 
   post_tasks:
     - name: Display service URLs
       debug:
         msg: |
           Services are now available at:
+          - Dashboard: http://{{ ansible_host }}
           - Cockpit: https://{{ ansible_host }}:9090
           - Portainer: http://{{ ansible_host }}:9000
           - SABnzbd: http://{{ ansible_host }}:8080

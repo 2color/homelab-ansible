@@ -1,0 +1,37 @@
+---
+- name: Create caddy html directory
+  file:
+    path: /opt/docker-data/caddy/html
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Generate dashboard HTML from template
+  template:
+    src: index.html.j2
+    dest: /opt/docker-data/caddy/html/index.html
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0644'
+
+- name: Deploy Caddy container for dashboard
+  docker_container:
+    name: homelab-dashboard
+    image: caddy:alpine
+    state: started
+    restart_policy: always
+    ports:
+      - "80:80"
+    volumes:
+      - /opt/docker-data/caddy/html:/usr/share/caddy:ro
+    networks:
+      - name: homelab-network
+    command: ["caddy", "file-server", "--root", "/usr/share/caddy", "--listen", ":80"]
+
+- name: Allow HTTP through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+  ignore_errors: yes
