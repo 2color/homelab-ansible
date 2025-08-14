@@ -1,0 +1,68 @@
+---
+- name: Create ytdl-sub config directory
+  file:
+    path: /opt/docker-data/ytdl-sub/config
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create ytdl-sub tv_shows directory
+  file:
+    path: /opt/docker-data/ytdl-sub/tv_shows
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create ytdl-sub movies directory
+  file:
+    path: /opt/docker-data/ytdl-sub/movies
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create ytdl-sub music directory
+  file:
+    path: /opt/docker-data/ytdl-sub/music
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create ytdl-sub music videos directory
+  file:
+    path: /opt/docker-data/ytdl-sub/music_videos
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Deploy ytdl-sub container
+  docker_container:
+    name: ytdl-sub
+    image: ghcr.io/jmbannon/ytdl-sub-gui:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "8443:8443"
+    env:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "{{ timezone | default('UTC') }}"
+    volumes:
+      - /opt/docker-data/ytdl-sub/config:/config
+      - /opt/docker-data/ytdl-sub/tv_shows:/tv_shows
+      - /opt/docker-data/ytdl-sub/movies:/movies
+      - /opt/docker-data/ytdl-sub/music_videos:/music_videos
+      - /opt/docker-data/ytdl-sub/music:/music
+    networks:
+      - name: homelab-network
+
+- name: Allow ytdl-sub through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: '8443'
+    proto: tcp
+  ignore_errors: yes
