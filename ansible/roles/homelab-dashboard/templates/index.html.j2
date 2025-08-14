@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homelab Services Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .service-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.15);
+        }
+        .service-name {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+        .service-description {
+            color: #718096;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .service-port {
+            font-family: 'Monaco', 'Consolas', monospace;
+            background: #f7fafc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+        .server-info {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .server-info strong {
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Homelab Services Dashboard</h1>
+        <div class="server-info">
+            <strong>Server:</strong> {{ ansible_hostname | default('homelab-1') }} 
+            (<strong>{{ ansible_host }}</strong>)
+        </div>
+        
+        <div class="services-grid">
+            <a href="https://{{ ansible_host }}:9090" class="service-card" target="_blank">
+                <div class="service-name">Cockpit</div>
+                <div class="service-description">System management and monitoring interface</div>
+                <div class="service-port">:9090</div>
+            </a>
+
+            <a href="http://{{ ansible_host }}:9000" class="service-card" target="_blank">
+                <div class="service-name">Portainer</div>
+                <div class="service-description">Docker container management</div>
+                <div class="service-port">:9000</div>
+            </a>
+
+            <a href="http://{{ ansible_host }}:8080" class="service-card" target="_blank">
+                <div class="service-name">SABnzbd</div>
+                <div class="service-description">Usenet downloader and processor</div>
+                <div class="service-port">:8080</div>
+            </a>
+
+            <a href="http://{{ ansible_host }}:32400/web" class="service-card" target="_blank">
+                <div class="service-name">Plex Media Server</div>
+                <div class="service-description">Media streaming and library management</div>
+                <div class="service-port">:32400</div>
+            </a>
+
+            <a href="http://{{ ansible_host }}:8443" class="service-card" target="_blank">
+                <div class="service-name">ytdl-sub</div>
+                <div class="service-description">YouTube downloader with subscription management</div>
+                <div class="service-port">:8443</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
