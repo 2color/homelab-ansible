@@ -46,7 +46,7 @@
     state: started
     restart_policy: always
     ports:
-      - "8443:8443"
+      - "{{ ytdl_sub_port }}:8443"
     env:
       PUID: "1000"
       PGID: "1000"
@@ -63,6 +63,6 @@
 - name: Allow ytdl-sub through firewall (if ufw is enabled)
   ufw:
     rule: allow
-    port: '8443'
+    port: "{{ ytdl_sub_port }}"
     proto: tcp
   ignore_errors: yes

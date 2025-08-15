@@ -23,7 +23,7 @@
     state: started
     restart_policy: always
     ports:
-      - "32400:32400"
+      - "{{ plex_port }}:32400"
       - "1900:1900/udp"
       - "3005:3005"
       - "5353:5353/udp"
@@ -51,6 +51,6 @@
 - name: Allow Plex through firewall (if ufw is enabled)
   ufw:
     rule: allow
-    port: '32400'
+    port: "{{ plex_port }}"
     proto: tcp
   ignore_errors: yes
