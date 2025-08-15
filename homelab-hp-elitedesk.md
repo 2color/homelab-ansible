@@ -198,6 +198,34 @@ Intel vPro with Active Management Technology (AMT) provides:
 - NFS/SMB network shares (recommended)
 - Direct USB connection not supported (self-contained system)
 
+### File Sharing for Mac Clients
+
+When sharing files from the homelab to Mac clients, there are several protocol options with different performance characteristics:
+
+#### NFS (Network File System)
+- **Performance:** Generally fastest for large file transfers
+- **macOS Support:** Native support, but requires manual configuration
+- **Setup:** More complex configuration, requires NFS server setup
+- **Use Case:** Best for bulk data transfers and server-to-server communication
+
+#### SMB/CIFS (Server Message Block)
+- **Performance:** Good performance, especially SMB3+ with modern implementations
+- **macOS Support:** Native Finder integration, easy mounting
+- **Setup:** Simpler configuration with Samba
+- **Use Case:** Best balance of performance and ease of use for mixed environments
+- **Recommendation:** Use SMB3 or higher for better performance and security
+
+#### AFP (Apple Filing Protocol)
+- **Performance:** Historically optimized for Mac but now deprecated
+- **macOS Support:** Legacy support only (deprecated since macOS 10.9)
+- **Setup:** Not recommended for new deployments
+- **Use Case:** Legacy Mac environments only
+
+#### Performance Considerations
+- **macOS Finder Limitations:** Be aware that Finder has known performance issues with network file copies
+- **Reference:** [macOS Finder is still bad at network file copies](https://www.jeffgeerling.com/blog/2024/macos-finder-still-bad-network-file-copies)
+- **Workaround:** Use command-line tools (`rsync`, `cp`) or third-party file managers for better performance
+
 ## Backups
 
 Still undecided on the backup strategy, but considering the following options:
