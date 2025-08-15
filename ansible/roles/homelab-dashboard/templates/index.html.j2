@@ -82,34 +82,34 @@
         </div>
         
         <div class="services-grid">
-            <a href="https://{{ ansible_host }}:9090" class="service-card" target="_blank">
+            <a href="https://{{ ansible_host }}:{{ cockpit_port }}" class="service-card" target="_blank">
                 <div class="service-name">Cockpit</div>
                 <div class="service-description">System management and monitoring interface</div>
-                <div class="service-port">:9090</div>
+                <div class="service-port">:{{ cockpit_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:9000" class="service-card" target="_blank">
+            <a href="http://{{ ansible_host }}:{{ portainer_port }}" class="service-card" target="_blank">
                 <div class="service-name">Portainer</div>
                 <div class="service-description">Docker container management</div>
-                <div class="service-port">:9000</div>
+                <div class="service-port">:{{ portainer_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:8080" class="service-card" target="_blank">
+            <a href="http://{{ ansible_host }}:{{ sabnzbd_port }}" class="service-card" target="_blank">
                 <div class="service-name">SABnzbd</div>
                 <div class="service-description">Usenet downloader and processor</div>
-                <div class="service-port">:8080</div>
+                <div class="service-port">:{{ sabnzbd_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:32400/web" class="service-card" target="_blank">
+            <a href="http://{{ ansible_host }}:{{ plex_port }}/web" class="service-card" target="_blank">
                 <div class="service-name">Plex Media Server</div>
                 <div class="service-description">Media streaming and library management</div>
-                <div class="service-port">:32400</div>
+                <div class="service-port">:{{ plex_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:8443" class="service-card" target="_blank">
+            <a href="http://{{ ansible_host }}:{{ ytdl_sub_port }}" class="service-card" target="_blank">
                 <div class="service-name">ytdl-sub</div>
                 <div class="service-description">YouTube downloader with subscription management</div>
-                <div class="service-port">:8443</div>
+                <div class="service-port">:{{ ytdl_sub_port }}</div>
             </a>
         </div>
     </div>

@@ -10,8 +10,8 @@
     state: started
     restart_policy: always
     ports:
-      - "9000:9000"
-      - "8000:8000"
+      - "{{ portainer_port }}:9000"
+      - "{{ portainer_edge_port }}:8000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
@@ -21,6 +21,6 @@
 - name: Allow Portainer through firewall (if ufw is enabled)
   ufw:
     rule: allow
-    port: '9000'
+    port: "{{ portainer_port }}"
     proto: tcp
   ignore_errors: yes

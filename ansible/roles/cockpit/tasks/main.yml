@@ -18,6 +18,6 @@
 - name: Allow Cockpit through firewall (if ufw is enabled)
   ufw:
     rule: allow
-    port: '9090'
+    port: "{{ cockpit_port }}"
     proto: tcp
   ignore_errors: yes

@@ -32,6 +32,54 @@ Ansible playbooks to configure your HP EliteDesk 800 G4 Mini as a homelab server
    ansible-playbook playbooks/site.yml
    ```
 
+## Running Specific Roles
+
+You can run individual roles instead of the entire playbook:
+
+### Single Role
+```bash
+# Run only the Docker role
+ansible-playbook playbooks/site.yml --tags docker
+
+# Run only the Plex role  
+ansible-playbook playbooks/site.yml --tags plex
+
+# Run only the SABnzbd role
+ansible-playbook playbooks/site.yml --tags sabnzbd
+
+# Run only the Portainer role
+ansible-playbook playbooks/site.yml --tags portainer
+
+# Run only the Cockpit role
+ansible-playbook playbooks/site.yml --tags cockpit
+
+# Run only the ytdl-sub role
+ansible-playbook playbooks/site.yml --tags ytdl-sub
+
+# Run only the dashboard role
+ansible-playbook playbooks/site.yml --tags homelab-dashboard
+```
+
+### Multiple Roles
+```bash
+# Run only media-related services
+ansible-playbook playbooks/site.yml --tags "plex,sabnzbd,ytdl-sub"
+
+# Run only management interfaces
+ansible-playbook playbooks/site.yml --tags "cockpit,portainer,homelab-dashboard"
+```
+
+### Skip Specific Roles
+```bash
+# Run everything except Plex
+ansible-playbook playbooks/site.yml --skip-tags plex
+
+# Skip multiple roles
+ansible-playbook playbooks/site.yml --skip-tags "plex,sabnzbd"
+```
+
+**Note:** Make sure to run the `docker` role first if running individual service roles, as they depend on Docker being installed.
+
 ## Services Installed
 
 After successful deployment, these services will be available:
@@ -40,6 +88,8 @@ After successful deployment, these services will be available:
 - **Portainer**: http://YOUR_IP:9000 - Docker container management
 - **SABnzbd**: http://YOUR_IP:8080 - Usenet downloader
 - **Plex**: http://YOUR_IP:32400/web - Media server
+- **ytdl-sub**: http://YOUR_IP:8443 - YouTube downloader with subscription management
+- **Dashboard**: http://YOUR_IP:80 - Service dashboard with links to all services
 
 ## Directory Structure
 
@@ -52,10 +102,32 @@ After successful deployment, these services will be available:
 │   ├── config/          # SABnzbd configuration
 │   ├── downloads/       # Completed downloads (shared with Plex as /media)
 │   └── incomplete/      # Incomplete downloads
+├── ytdl-sub/
+│   ├── config/          # ytdl-sub configuration
+│   ├── tv_shows/        # Downloaded TV shows
+│   ├── movies/          # Downloaded movies
+│   ├── music/           # Downloaded music
+│   └── music_videos/    # Downloaded music videos
+├── caddy/
+│   └── html/            # Dashboard HTML files
 └── portainer_data/      # Portainer configuration (Docker volume)
 ```
 
 ## Configuration
+
+### Port Customization
+Each service uses configurable port variables defined in their respective role defaults. To change a service port:
+
+1. Edit the role's `defaults/main.yml` file:
+   - `roles/cockpit/defaults/main.yml` - `cockpit_port: 9090`
+   - `roles/portainer/defaults/main.yml` - `portainer_port: 9000`
+   - `roles/sabnzbd/defaults/main.yml` - `sabnzbd_port: 8080`
+   - `roles/plex/defaults/main.yml` - `plex_port: 32400`
+   - `roles/ytdl-sub/defaults/main.yml` - `ytdl_sub_port: 8443`
+
+2. Re-run the playbook to apply changes
+
+The dashboard automatically uses these port variables and will update when ports change.
 
 ### Plex Setup
 1. Get a claim token from https://www.plex.tv/claim/
@@ -88,5 +160,5 @@ ansible homelab-1 -m shell -a "docker logs sabnzbd"
 
 ### Restart services
 ```bash
-ansible homelab-1 -m shell -a "docker restart plex sabnzbd portainer"
+ansible homelab-1 -m shell -a "docker restart plex sabnzbd portainer ytdl-sub homelab-dashboard"
 ```

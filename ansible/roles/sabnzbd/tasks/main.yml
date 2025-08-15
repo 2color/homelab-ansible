@@ -30,7 +30,7 @@
     state: started
     restart_policy: always
     ports:
-      - "8080:8080"
+      - "{{ sabnzbd_port }}:8080"
     env:
       PUID: "1000"
       PGID: "1000"
@@ -45,6 +45,6 @@
 - name: Allow SABnzbd through firewall (if ufw is enabled)
   ufw:
     rule: allow
-    port: '8080'
+    port: "{{ sabnzbd_port }}"
     proto: tcp
   ignore_errors: yes
