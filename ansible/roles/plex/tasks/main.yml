@@ -43,6 +43,7 @@
       - /opt/docker-data/plex/config:/config
       - /opt/docker-data/plex/transcode:/transcode
       - /opt/docker-data/sabnzbd/downloads:/media
+      - /opt/docker-data/ytdl-sub:/ytdl-sub
     networks:
       - name: homelab-network
     devices:
