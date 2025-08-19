@@ -21,6 +21,16 @@
    read raw = yes
    write raw = yes
    
+   # macOS compatibility fixes
+   # Disable DFS (Distributed File System) to fix hostname parsing errors
+   host msdfs = no
+   # Improve macOS Finder compatibility with Apple-specific metadata handling
+   vfs objects = catia fruit streams_xattr
+   # Store macOS metadata in filesystem extended attributes (not ._ files)
+   fruit:metadata = stream
+   # Identify as MacSamba for better macOS client recognition
+   fruit:model = MacSamba
+
    # Disable printing
    load printers = no
    printing = bsd
