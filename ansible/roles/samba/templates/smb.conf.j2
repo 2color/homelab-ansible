@@ -46,6 +46,9 @@
    read only = {{ share.read_only | default('yes') }}
    create mask = {{ share.create_mask | default('0644') }}
    directory mask = {{ share.directory_mask | default('0755') }}
+{% if share.public is defined and share.public %}
+   public = yes
+{% endif %}
 {% if share.valid_users is defined %}
    valid users = {{ share.valid_users }}
 {% endif %}
