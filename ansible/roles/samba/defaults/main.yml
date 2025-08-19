@@ -17,13 +17,13 @@ samba_shares:
     browseable: yes
     # Allow guest/anonymous read access
     guest_ok: yes
-    # Default to read-only for all users
+    # Default to read-only for all users including guests
     read_only: yes
     # File creation permissions for new files
     create_mask: "0644"
     # Directory creation permissions for new directories
     directory_mask: "0755"
-    # Only daniel user can authenticate for full access
-    valid_users: "daniel"
-    # Allow daniel user to write to the share
+    # Allow daniel user to write to the share (removes valid_users restriction)
     write_list: "daniel"
+    # Make share publicly readable but only daniel can write
+    public: yes
