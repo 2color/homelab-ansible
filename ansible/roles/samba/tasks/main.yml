@@ -1,0 +1,59 @@
+---
+- name: Install Samba packages
+  apt:
+    name:
+      - samba
+      - samba-common-bin
+    state: present
+    update_cache: yes
+
+- name: Create samba configuration from template
+  template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    backup: yes
+  notify: restart samba
+
+- name: Add daniel user to samba
+  shell: |
+    (echo "{{ samba_daniel_password | default('homelab') }}"; echo "{{ samba_daniel_password | default('homelab') }}") | smbpasswd -s -a daniel
+  # Only run if password is defined or not in check mode
+  when: samba_daniel_password is defined or ansible_check_mode == false
+  # Don't log the password command
+  no_log: true
+
+- name: Enable samba user daniel
+  shell: smbpasswd -e daniel
+  ignore_errors: yes
+
+- name: Start and enable samba services
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  # Start both samba daemon and netbios daemon
+  loop:
+    - smbd
+    - nmbd
+
+- name: Allow Samba through firewall
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  # Open standard SMB ports (NetBIOS session and SMB over TCP)
+  loop:
+    - "139"
+    - "445"
+  ignore_errors: yes
+
+- name: Allow NetBIOS through firewall
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+  # Open NetBIOS name service and datagram service ports
+  loop:
+    - "137"
+    - "138"
+  ignore_errors: yes
