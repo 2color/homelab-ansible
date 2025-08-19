@@ -1,0 +1,29 @@
+---
+# Samba configuration defaults
+samba_workgroup: WORKGROUP
+samba_server_string: "Homelab Samba Server"
+samba_netbios_name: "homelab-1"
+
+# Network access restriction
+samba_hosts_allow: "192.168.1."
+samba_hosts_deny: "ALL"
+
+# Share configuration
+samba_shares:
+  - name: docker-data
+    path: /opt/docker-data
+    comment: "Docker Data Directory"
+    # Allow share to appear in network browse lists
+    browseable: yes
+    # Allow guest/anonymous read access
+    guest_ok: yes
+    # Default to read-only for all users
+    read_only: yes
+    # File creation permissions for new files
+    create_mask: "0644"
+    # Directory creation permissions for new directories
+    directory_mask: "0755"
+    # Only daniel user can authenticate for full access
+    valid_users: "daniel"
+    # Allow daniel user to write to the share
+    write_list: "daniel"
