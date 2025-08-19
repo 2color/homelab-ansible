@@ -226,6 +226,92 @@ When sharing files from the homelab to Mac clients, there are several protocol o
 - **Reference:** [macOS Finder is still bad at network file copies](https://www.jeffgeerling.com/blog/2024/macos-finder-still-bad-network-file-copies)
 - **Workaround:** Use command-line tools (`rsync`, `cp`) or third-party file managers for better performance
 
+### Samba Configuration for macOS Compatibility
+
+The homelab includes a Samba file server that shares `/opt/docker-data/` with both guest and authenticated access.
+
+#### Configuration Details
+- **Share Name:** `docker-data`
+- **Path:** `/opt/docker-data/`
+- **Guest Access:** Read-only for anonymous users
+- **Authenticated Access:** Read-write for `daniel` user
+- **Network Restriction:** Limited to 192.168.1.x subnet
+
+#### macOS-Specific Samba Settings
+To ensure compatibility with macOS clients, the following settings are configured:
+
+```ini
+# Disable DFS (Distributed File System) to fix hostname parsing errors
+host msdfs = no
+
+# Improve macOS Finder compatibility with Apple-specific metadata handling
+vfs objects = catia fruit streams_xattr
+
+# Store macOS metadata in filesystem extended attributes (not ._ files)
+fruit:metadata = stream
+
+# Identify as MacSamba for better macOS client recognition
+fruit:model = MacSamba
+```
+
+#### Common macOS Connection Issues
+
+**Error: "The operation can't be completed because the original item for 'docker-data' can't be found"**
+
+This typically indicates:
+1. **Directory permissions issue** - The shared directory may not have proper read permissions
+2. **Guest access misconfiguration** - Anonymous access may not be properly enabled
+3. **Path resolution problem** - The share path may not be accessible to the samba process
+
+**Troubleshooting Steps:**
+1. **Verify directory exists and has proper permissions:**
+   ```bash
+   ls -la /opt/docker-data/
+   # Should show readable permissions for the samba process
+   ```
+
+2. **Check Samba service status:**
+   ```bash
+   systemctl status smbd nmbd
+   ```
+
+3. **Test connection from macOS terminal:**
+   ```bash
+   # Test SMB connection
+   smbutil view //192.168.1.36
+
+   # Mount share manually
+   mkdir ~/mnt/homelab
+   mount -t smbfs //guest@192.168.1.36/docker-data ~/mnt/homelab
+   ```
+
+4. **Check Samba logs for specific errors:**
+   ```bash
+   tail -f /var/log/samba/log.smbd
+   ```
+
+**DFS Hostname Parsing Error Fix:**
+
+If you see errors like "parse_dfs_path_strict: can't parse hostname from path", the `host msdfs = no` setting should resolve this by disabling DFS functionality that can conflict with macOS SMB clients.
+
+#### Connection Methods
+
+**From macOS Finder:**
+- Press `Cmd+K` and enter: `smb://192.168.1.36/docker-data`
+- Or: `smb://guest@192.168.1.36/docker-data` for explicit guest access
+
+**From macOS Terminal:**
+```bash
+# List available shares
+smbutil view //192.168.1.36
+
+# Mount with guest access
+mount -t smbfs //guest@192.168.1.36/docker-data /path/to/mount/point
+
+# Mount with authentication
+mount -t smbfs //daniel@192.168.1.36/docker-data /path/to/mount/point
+```
+
 ## Backups
 
 Still undecided on the backup strategy, but considering the following options:
