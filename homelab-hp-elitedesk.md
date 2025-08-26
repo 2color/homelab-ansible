@@ -39,6 +39,8 @@ The homelab runs the following services managed by Ansible:
 - **Docker**: Container runtime (geerlingguy.docker role)
 - **Cockpit**: System management web interface (port 9090)
 - **Portainer**: Container management interface (port 9000)
+- **Tailscale**: Mesh VPN for secure remote access
+- **Samba**: File sharing server for `/opt/docker-data/` directory
 
 ### Media Services
 - **Plex Media Server**: Media streaming with Intel Quick Sync transcoding (port 32400)
@@ -73,7 +75,39 @@ See other notes.
 - You can still power on the system and access the BIOS remotely without a screen.
 - Solution: Use a dummy HDMI plug to trick the system into thinking a monitor is connected.
 
-## Dynamic DNS
+## Remote Access
+
+### Tailscale Mesh VPN
+
+The homelab uses Tailscale for secure remote access without exposing services to the public internet.
+
+#### Features Enabled
+- **Tailscale SSH**: Secure SSH access without local SSH keys or port forwarding
+- **DNS Integration**: Accept DNS settings from Tailscale for easy service discovery  
+- **Route Acceptance**: Can access other devices on the Tailscale network
+- **Hostname**: Uses inventory hostname (`homelab-1`) for easy identification
+
+#### Configuration
+- **Auth Key**: Stored securely in `vault_tailscale_auth_key` (Ansible vault)
+- **Username**: Configurable via `samba_username` variable (default: `daniel`)  
+- **Password**: Stored securely in `vault_samba_password` (Ansible vault)
+- **Installation**: Managed by Ansible role in the main playbook
+
+#### Setup Steps
+1. Get auth key from https://login.tailscale.com/admin/settings/keys
+2. Add to vault: `ansible-vault edit ansible/inventories/homelab/group_vars/vault.yml`
+3. Deploy: `cd ansible && ansible-playbook playbooks/site.yml --tags tailscale --ask-vault-pass`
+
+#### Benefits Over Port Forwarding
+- No router configuration required
+- End-to-end encryption for all traffic
+- Works from any network (coffee shops, hotels, etc.)
+- No dynamic DNS setup needed
+- Built-in device authentication
+
+### Dynamic DNS (Alternative Approach)
+
+Alternative to Tailscale for remote access using traditional port forwarding:
 
 - Use a dynamic DNS service to access the home network remotely with a consistent domain name.
 - Setup router to update the dynamic DNS service with the current public IP address.
@@ -340,3 +374,8 @@ It may be nice to try ZFS for the second SSD drive in the HP EliteDesk. Seems a 
 ### Community Resources
 
 - [Proxmox vs Alternatives Discussion](https://www.reddit.com/r/homelab/comments/1h54vhg/what_are_the_pros_and_cons_for_choosing_proxmox/)
+
+### Ideas and Inspiration
+
+- https://perfectmediaserver.com/04
+- 

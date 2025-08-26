@@ -1,6 +1,8 @@
 ---
 - name: Configure HP EliteDesk Homelab Server
   hosts: homelab-1
+  vars_files:
+    - '../inventories/homelab/group_vars/vault.yml'
   become: yes
   gather_facts: yes
   
@@ -19,6 +21,7 @@
     - ytdl-sub
     - homelab-dashboard
     - samba
+    - { role: tailscale, tags: tailscale }
 
   post_tasks:
     - name: Display service URLs

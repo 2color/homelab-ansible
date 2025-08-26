@@ -8,6 +8,10 @@ samba_netbios_name: "homelab-1"
 samba_hosts_allow: "192.168.1."
 samba_hosts_deny: "ALL"
 
+# User configuration - credentials stored in vault
+samba_username: "daniel"
+# vault_samba_password is defined in vault.yml
+
 # Share configuration
 samba_shares:
   - name: docker-data
@@ -23,7 +27,7 @@ samba_shares:
     create_mask: "0644"
     # Directory creation permissions for new directories
     directory_mask: "0755"
-    # Allow daniel user to write to the share (removes valid_users restriction)
-    write_list: "daniel"
-    # Make share publicly readable but only daniel can write
+    # Allow configured user to write to the share
+    write_list: "{{ samba_username }}"
+    # Make share publicly readable but only configured user can write
     public: yes

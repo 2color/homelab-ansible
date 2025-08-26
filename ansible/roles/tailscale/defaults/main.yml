@@ -1,0 +1,10 @@
+---
+# Tailscale configuration defaults
+# Auth key is stored in vault_tailscale_auth_key (encrypted in vault.yml)
+tailscale_advertise_routes: []  # Example: ["192.168.1.0/24"]
+tailscale_accept_routes: true
+tailscale_accept_dns: true
+tailscale_hostname: "{{ inventory_hostname }}"
+tailscale_shields_up: false
+tailscale_exit_node: false
+tailscale_ssh: true  # Enable Tailscale SSH
