@@ -1,0 +1,81 @@
+---
+- name: Add Tailscale signing key
+  get_url:
+    url: https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    mode: '0644'
+  become: true
+
+- name: Add Tailscale repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu jammy main"
+    state: present
+  become: true
+
+- name: Update package cache
+  apt:
+    update_cache: yes
+  become: true
+
+- name: Install Tailscale
+  apt:
+    name: tailscale
+    state: present
+  become: true
+  notify: restart tailscale
+
+- name: Enable and start Tailscale service
+  systemd:
+    name: tailscaled
+    enabled: yes
+    state: started
+  become: true
+
+- name: Check if Tailscale is already authenticated
+  command: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+
+- name: Parse Tailscale status
+  set_fact:
+    tailscale_authenticated: "{{ (tailscale_status.stdout | from_json).BackendState == 'Running' }}"
+  when: tailscale_status.rc == 0
+
+- name: Set authentication status to false if command failed
+  set_fact:
+    tailscale_authenticated: false
+  when: tailscale_status.rc != 0
+
+
+- name: Debug vault variable
+  debug:
+    msg:
+      - "vault_tailscale_auth_key defined: {{ vault_tailscale_auth_key is defined }}"
+      - "vault_tailscale_auth_key length: {{ vault_tailscale_auth_key | length if vault_tailscale_auth_key is defined else 'N/A' }}"
+  tags: tailscale
+
+
+- name: Authenticate Tailscale
+  command: >
+    tailscale up
+    {% if vault_tailscale_auth_key is defined %}--authkey={{ vault_tailscale_auth_key }}{% endif %}
+    {% if tailscale_advertise_routes %}--advertise-routes={{ tailscale_advertise_routes | join(',') }}{% endif %}
+    {% if tailscale_accept_routes %}--accept-routes{% endif %}
+    {% if tailscale_accept_dns %}--accept-dns{% endif %}
+    {% if tailscale_hostname %}--hostname={{ tailscale_hostname }}{% endif %}
+    {% if tailscale_shields_up %}--shields-up{% endif %}
+    {% if tailscale_exit_node %}--advertise-exit-node{% endif %}
+    {% if tailscale_ssh %}--ssh{% endif %}
+  become: true
+  when: not tailscale_authenticated and vault_tailscale_auth_key is defined
+  notify: restart tailscale
+
+- name: Display Tailscale status
+  command: tailscale status
+  register: tailscale_final_status
+  changed_when: false
+
+- name: Show Tailscale connection info
+  debug:
+    msg: "{{ tailscale_final_status.stdout_lines }}"

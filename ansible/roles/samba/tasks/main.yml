@@ -14,16 +14,16 @@
     backup: yes
   notify: restart samba
 
-- name: Add daniel user to samba
+- name: Add samba user
   shell: |
-    (echo "{{ samba_daniel_password | default('homelab') }}"; echo "{{ samba_daniel_password | default('homelab') }}") | smbpasswd -s -a daniel
+    (echo "{{ vault_samba_password }}"; echo "{{ vault_samba_password }}") | smbpasswd -s -a {{ samba_username }}
   # Only run if password is defined or not in check mode
-  when: samba_daniel_password is defined or ansible_check_mode == false
+  when: vault_samba_password is defined or ansible_check_mode == false
   # Don't log the password command
   no_log: true
 
-- name: Enable samba user daniel
-  shell: smbpasswd -e daniel
+- name: Enable samba user
+  shell: smbpasswd -e {{ samba_username }}
   ignore_errors: yes
 
 - name: Start and enable samba services
