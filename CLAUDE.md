@@ -13,8 +13,8 @@ This is a homelab configuration repository for an HP EliteDesk 800 G4 Mini serve
 # Install required roles
 ansible-galaxy install -r ansible/requirements.yml
 
-# Deploy full homelab configuration  
-cd ansible && ansible-playbook playbooks/site.yml
+# Deploy full homelab configuration (requires vault password if using encrypted variables)
+cd ansible && ansible-playbook playbooks/site.yml --ask-vault-pass
 
 # Check container status on remote host
 ansible homelab-1 -m shell -a "docker ps"
@@ -31,6 +31,19 @@ ansible homelab-1 -m shell -a "docker restart plex sabnzbd portainer"
 ```bash
 # Start MeshCommander for AMT remote management
 npx meshcommander
+```
+
+### Tailscale (Mesh VPN)
+```bash
+# Add Tailscale auth key to vault (get from https://login.tailscale.com/admin/settings/keys)
+ansible-vault edit ansible/inventories/homelab/group_vars/vault.yml
+# Add: vault_tailscale_auth_key: "tskey-auth-xxxxx"
+
+# Deploy Tailscale
+cd ansible && ansible-playbook playbooks/site.yml --tags tailscale --ask-vault-pass
+
+# Check Tailscale status on remote host
+ansible homelab-1 -m shell -a "tailscale status"
 ```
 
 ## Architecture
