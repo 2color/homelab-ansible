@@ -1,0 +1,70 @@
+---
+- name: Install ZFS packages
+  apt:
+    name:
+      - zfsutils-linux
+      - zfs-dkms
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Load ZFS kernel module
+  modprobe:
+    name: zfs
+    state: present
+  become: true
+
+- name: Check if ZFS pool already exists
+  command: zpool list {{ zfs_pool_name }}
+  register: zfs_pool_exists
+  failed_when: false
+  changed_when: false
+
+- name: Create ZFS pool
+  command: zpool create -f {{ zfs_pool_name }} {{ zfs_pool_device }}
+  become: true
+  when: zfs_pool_exists.rc != 0
+
+- name: Create ZFS datasets
+  zfs:
+    name: "{{ item.name }}"
+    state: present
+  become: true
+  loop: "{{ zfs_datasets }}"
+  when: zfs_pool_exists.rc != 0
+
+- name: Set ZFS dataset properties
+  zfs:
+    name: "{{ item.name }}"
+    state: present
+    extra_zfs_properties: "{{ item.properties }}"
+  become: true
+  loop: "{{ zfs_datasets }}"
+
+- name: Enable ZFS auto-import on boot
+  lineinfile:
+    path: /etc/cron.d/zfs-import
+    create: yes
+    line: "@reboot root /sbin/zpool import -a"
+  become: true
+
+- name: Setup monthly ZFS scrub
+  cron:
+    name: "ZFS scrub {{ zfs_pool_name }}"
+    cron_file: zfs-scrub
+    user: root
+    job: "/sbin/zpool scrub {{ zfs_pool_name }}"
+    minute: "{{ zfs_scrub_cron_minute }}"
+    hour: "{{ zfs_scrub_cron_hour }}"
+    day: "{{ zfs_scrub_cron_day }}"
+  become: true
+  when: zfs_enable_scrub
+
+- name: Display ZFS status
+  command: zpool status {{ zfs_pool_name }}
+  register: zfs_status
+  changed_when: false
+
+- name: Show ZFS pool information
+  debug:
+    msg: "{{ zfs_status.stdout_lines }}"

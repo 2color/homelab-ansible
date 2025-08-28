@@ -1,0 +1,30 @@
+---
+# ZFS pool configuration
+zfs_pool_name: "homelab-data"
+zfs_pool_device: "/dev/nvme0n1"
+
+# ZFS datasets configuration
+zfs_datasets:
+  - name: "{{ zfs_pool_name }}/docker"
+    mountpoint: "/data/docker"
+    properties:
+      compression: "lz4"
+      atime: "off"
+      checksum: "sha256"
+  - name: "{{ zfs_pool_name }}/media"
+    mountpoint: "/data/media"
+    properties:
+      compression: "lz4"
+      atime: "off"
+      checksum: "sha256"
+
+# Migration settings
+zfs_backup_original: true
+zfs_migration_temp_mount: "/mnt/zfs-temp"
+zfs_verify_migration: true
+
+# Maintenance settings
+zfs_enable_scrub: true
+zfs_scrub_cron_minute: "0"
+zfs_scrub_cron_hour: "2"
+zfs_scrub_cron_day: "1"  # First day of each month

@@ -1,0 +1,117 @@
+---
+- name: Check if migration is needed
+  stat:
+    path: "{{ migration_backup_path }}"
+  register: migration_complete
+
+- name: Check if source directory exists
+  stat:
+    path: "{{ migration_source_path }}"
+  register: source_exists
+  when: not migration_complete.stat.exists
+
+- name: Skip migration if source doesn't exist
+  debug:
+    msg: "Source directory {{ migration_source_path }} does not exist, skipping migration"
+  when: not migration_complete.stat.exists and not source_exists.stat.exists
+
+- name: Stop all Docker containers for migration
+  shell: docker stop $(docker ps -q)
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists and migration_stop_containers
+  ignore_errors: true
+
+- name: Create temporary mount point
+  file:
+    path: "{{ zfs_migration_temp_mount }}"
+    state: directory
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Set temporary mount point for migration
+  zfs:
+    name: "{{ zfs_docker_dataset }}"
+    state: present
+    extra_zfs_properties:
+      mountpoint: "{{ zfs_migration_temp_mount }}"
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Get source directory size
+  shell: du -sb {{ migration_source_path }} | cut -f1
+  register: source_size
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Display migration info
+  debug:
+    msg: 
+      - "Migrating {{ migration_source_path }} to ZFS"
+      - "Source size: {{ (source_size.stdout | int / 1024 / 1024 / 1024) | round(2) }} GB"
+      - "Target: {{ zfs_migration_temp_mount }}"
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Migrate data with rsync
+  synchronize:
+    src: "{{ migration_source_path }}/"
+    dest: "{{ zfs_migration_temp_mount }}/"
+    archive: yes
+    checksum: yes
+    delete: no
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Verify data migration
+  shell: diff -r {{ migration_source_path }}/ {{ zfs_migration_temp_mount }}/
+  register: migration_diff
+  failed_when: migration_diff.rc not in [0, 1]
+  when: not migration_complete.stat.exists and source_exists.stat.exists and zfs_verify_migration
+
+- name: Display verification results
+  debug:
+    msg: "Data migration verification successful"
+  when: not migration_complete.stat.exists and source_exists.stat.exists and zfs_verify_migration and migration_diff.rc == 0
+
+- name: Backup original data
+  command: mv {{ migration_source_path }} {{ migration_backup_path }}
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Set final ZFS mount point
+  zfs:
+    name: "{{ zfs_docker_dataset }}"
+    state: present
+    extra_zfs_properties:
+      mountpoint: "{{ migration_target_path }}"
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Create symlink for backward compatibility
+  file:
+    src: "{{ migration_target_path }}"
+    dest: "{{ migration_source_path }}"
+    state: link
+    force: yes
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists and zfs_create_symlink
+
+- name: Start Docker containers after migration
+  shell: docker start $(docker ps -aq)
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists and migration_start_containers
+  ignore_errors: true
+
+- name: Display migration completion message
+  debug:
+    msg:
+      - "Migration completed successfully!"
+      - "Original data backed up to: {{ migration_backup_path }}"
+      - "New ZFS dataset mounted at: {{ migration_target_path }}"
+      - "Symlink created: {{ migration_source_path }} -> {{ migration_target_path }}"
+  when: not migration_complete.stat.exists and source_exists.stat.exists
+
+- name: Clean up temporary mount point
+  file:
+    path: "{{ zfs_migration_temp_mount }}"
+    state: absent
+  become: true
+  when: not migration_complete.stat.exists and source_exists.stat.exists
