@@ -46,6 +46,39 @@ cd ansible && ansible-playbook playbooks/site.yml --tags tailscale --ask-vault-p
 ansible homelab-1 -m shell -a "tailscale status"
 ```
 
+### ZFS Storage Management
+```bash
+# Deploy ZFS setup only (install, create pool and datasets)
+cd ansible && ansible-playbook playbooks/site.yml --tags zfs --ask-vault-pass
+
+# Run data migration from /opt/docker-data to ZFS
+cd ansible && ansible-playbook playbooks/site.yml --tags zfs-migration --ask-vault-pass
+
+# Deploy both ZFS setup and migration
+cd ansible && ansible-playbook playbooks/site.yml --tags zfs,zfs-migration --ask-vault-pass
+
+# Check ZFS pool status
+ansible homelab-1 -m shell -a "zpool status"
+
+# List ZFS datasets and usage
+ansible homelab-1 -m shell -a "zfs list"
+
+# Check compression ratio
+ansible homelab-1 -m shell -a "zfs get compressratio homelab-data/docker"
+
+# Create manual snapshot
+ansible homelab-1 -m shell -a "zfs snapshot homelab-data/docker@manual-$(date +%Y%m%d)"
+
+# List snapshots
+ansible homelab-1 -m shell -a "zfs list -t snapshot"
+
+# Scrub ZFS pool for data integrity
+ansible homelab-1 -m shell -a "zpool scrub homelab-data"
+
+# Check scrub status
+ansible homelab-1 -m shell -a "zpool status -v homelab-data"
+```
+
 ## Architecture
 
 ### Infrastructure Stack

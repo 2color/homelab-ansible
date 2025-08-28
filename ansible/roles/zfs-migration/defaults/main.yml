@@ -1,0 +1,18 @@
+---
+# ZFS pool and dataset names (should match zfs role)
+zfs_pool_name: "homelab-data"
+zfs_docker_dataset: "{{ zfs_pool_name }}/docker"
+
+# Source and target paths
+migration_source_path: "/opt/docker-data"
+migration_target_path: "/data/docker"
+migration_backup_path: "/opt/docker-data.bak"
+
+# Migration settings
+zfs_migration_temp_mount: "/mnt/zfs-temp"
+zfs_verify_migration: true
+zfs_create_symlink: true
+
+# Safety settings
+migration_stop_containers: true
+migration_start_containers: true

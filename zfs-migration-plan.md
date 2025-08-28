@@ -9,16 +9,15 @@ This document outlines the complete plan to migrate the homelab storage from the
 - **Current Storage**: `/opt/docker-data/` on ext4 filesystem
 - **New Hardware**: 1.8TB NVMe SSD (`/dev/nvme0n1`)
 - **Services**: All Docker containers mount subdirectories under `/opt/docker-data/`
-- **Samba Share**: Shares `/opt/docker-data/` as `docker-data` network share
+- **Samba Share**: Shares `/opt/docker-data/` as `docker-data` network share (will use symlink to `/data/docker`)
 
 ## ZFS Architecture Design
 
 ### Pool Structure
 ```
 Pool Name: homelab-data (on /dev/nvme0n1)
-├── homelab-data/docker-data   → /opt/docker-data     (Main Docker storage)
-├── homelab-data/backup        → /opt/backup          (Backup storage)
-└── homelab-data/media         → /opt/media           (Future media expansion)
+├── homelab-data/docker        → /data/docker         (Main Docker storage)
+└── homelab-data/media         → /data/media          (Future media expansion)
 ```
 
 ### ZFS Properties
@@ -43,22 +42,18 @@ zfs_pool_device: "/dev/nvme0n1"
 
 # ZFS datasets configuration
 zfs_datasets:
-  - name: "{{ zfs_pool_name }}/docker-data"
-    mountpoint: "/opt/docker-data"
+  - name: "{{ zfs_pool_name }}/docker"
+    mountpoint: "/data/docker"
     properties:
       compression: "lz4"
       atime: "off"
       checksum: "sha256"
-  - name: "{{ zfs_pool_name }}/backup"
-    mountpoint: "/opt/backup"
-    properties:
-      compression: "lz4"
-      atime: "off"
   - name: "{{ zfs_pool_name }}/media"
-    mountpoint: "/opt/media"
+    mountpoint: "/data/media"
     properties:
       compression: "lz4"
       atime: "off"
+      checksum: "sha256"
 
 # Migration settings
 zfs_backup_original: true
@@ -132,7 +127,7 @@ zfs_verify_migration: true
 
 - name: Set temporary mount point for migration
   zfs:
-    name: "{{ zfs_pool_name }}/docker-data"
+    name: "{{ zfs_pool_name }}/docker"
     state: present
     extra_zfs_properties:
       mountpoint: "{{ zfs_migration_temp_mount }}"
@@ -160,12 +155,12 @@ zfs_verify_migration: true
   become: true
   when: not migration_complete.stat.exists
 
-- name: Set final ZFS mount point
-  zfs:
-    name: "{{ zfs_pool_name }}/docker-data"
-    state: present
-    extra_zfs_properties:
-      mountpoint: /opt/docker-data
+- name: Create symlink for backward compatibility
+  file:
+    src: /data/docker
+    dest: /opt/docker-data
+    state: link
+    force: yes
   become: true
   when: not migration_complete.stat.exists
 
@@ -237,7 +232,7 @@ ansible homelab-1 -m shell -a "zpool status"
 ansible homelab-1 -m shell -a "zfs list"
 
 # Create snapshot
-ansible homelab-1 -m shell -a "zfs snapshot homelab-data/docker-data@backup-$(date +%Y%m%d)"
+ansible homelab-1 -m shell -a "zfs snapshot homelab-data/docker@backup-$(date +%Y%m%d)"
 
 # List snapshots
 ansible homelab-1 -m shell -a "zfs list -t snapshot"
@@ -257,10 +252,10 @@ ansible homelab-1 -m shell -a "zpool scrub homelab-data"
 ### Migration Steps
 1. **Stop Services**: All Docker containers stopped to prevent data corruption
 2. **Create ZFS Pool**: `zpool create homelab-data /dev/nvme0n1`
-3. **Create Datasets**: ZFS datasets with optimized properties
+3. **Create Datasets**: ZFS datasets with optimized properties mounted to `/data`
 4. **Data Copy**: `rsync` preserves all permissions, timestamps, and metadata
 5. **Verification**: `diff` command ensures data integrity
-6. **Atomic Switch**: Original directory renamed, ZFS mounted in place
+6. **Create Symlink**: `/opt/docker-data` → `/data/docker` for backward compatibility
 7. **Service Restart**: Docker containers started with new storage
 
 ### Rollback Plan
@@ -269,11 +264,12 @@ If issues arise:
 # Stop containers
 docker stop $(docker ps -q)
 
-# Unmount ZFS
-zfs set mountpoint=none homelab-data/docker-data
-
-# Restore original data
+# Remove symlink and restore original data
+rm -f /opt/docker-data
 mv /opt/docker-data.bak /opt/docker-data
+
+# Unmount ZFS
+zfs set mountpoint=none homelab-data/docker
 
 # Start containers
 docker start $(docker ps -aq)
@@ -347,10 +343,10 @@ zpool status homelab-data
 zfs list
 
 # Create snapshot
-zfs snapshot homelab-data/docker-data@manual-$(date +%Y%m%d)
+zfs snapshot homelab-data/docker@manual-$(date +%Y%m%d)
 
 # Compression ratio
-zfs get compressratio homelab-data/docker-data
+zfs get compressratio homelab-data/docker
 
 # Pool health check
 zpool scrub homelab-data

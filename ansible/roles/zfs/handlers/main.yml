@@ -1,0 +1,12 @@
+---
+- name: restart docker
+  systemd:
+    name: docker
+    state: restarted
+  become: true
+
+- name: reload zfs modules
+  shell: |
+    modprobe -r zfs
+    modprobe zfs
+  become: true
