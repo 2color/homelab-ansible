@@ -1,4 +1,14 @@
 ---
+- name: Validate ZFS configuration
+  assert:
+    that:
+      - zfs_pool_name is defined and zfs_pool_name | length > 0
+      - zfs_pool_device is defined and zfs_pool_device.startswith('/dev/')
+      - zfs_datasets is defined and zfs_datasets | length > 0
+      - zfs_datasets | selectattr('name', 'undefined') | list | length == 0
+      - zfs_datasets | selectattr('mountpoint', 'undefined') | list | length == 0
+    fail_msg: "Invalid ZFS configuration detected"
+
 - name: Install ZFS packages
   apt:
     name:
@@ -20,32 +30,78 @@
   failed_when: false
   changed_when: false
 
-- name: Create ZFS pool
-  command: zpool create -f {{ zfs_pool_name }} {{ zfs_pool_device }}
+- name: Verify target device exists and is block device
+  stat:
+    path: "{{ zfs_pool_device }}"
+  register: zfs_device_stat
+  failed_when: not zfs_device_stat.stat.exists or not zfs_device_stat.stat.isblk
+  when: zfs_pool_exists.rc != 0
+
+- name: Check device is not mounted or in use
+  shell: lsblk -n -o MOUNTPOINT {{ zfs_pool_device }} | grep -v '^$' || true
+  register: device_mounted
+  failed_when: device_mounted.stdout | trim | length > 0
+  when: zfs_pool_exists.rc != 0
+
+- name: Create ZFS pool with optimized properties
+  command: >
+    zpool create 
+    {% for key, value in zfs_pool_properties.items() %}-o {{ key }}={{ value }} {% endfor %}
+    {% for key, value in zfs_default_properties.items() %}-O {{ key }}={{ value }} {% endfor %}
+    {{ zfs_pool_name }} {{ zfs_pool_device }}
   become: true
   when: zfs_pool_exists.rc != 0
 
-- name: Create ZFS datasets
-  zfs:
-    name: "{{ item.name }}"
-    state: present
-  become: true
-  loop: "{{ zfs_datasets }}"
-  when: zfs_pool_exists.rc != 0
-
-- name: Set ZFS dataset properties
-  zfs:
-    name: "{{ item.name }}"
-    state: present
-    extra_zfs_properties: "{{ item.properties }}"
-  become: true
+- name: Check if datasets exist
+  shell: zfs list {{ item.name }}
+  register: dataset_exists
+  failed_when: false
+  changed_when: false
   loop: "{{ zfs_datasets }}"
 
-- name: Enable ZFS auto-import on boot
-  lineinfile:
-    path: /etc/cron.d/zfs-import
-    create: yes
-    line: "@reboot root /sbin/zpool import -a"
+- name: Create missing ZFS datasets
+  zfs:
+    name: "{{ item.item.name }}"
+    state: present
+    extra_zfs_properties: "{{ zfs_default_properties | combine(item.item.properties) }}"
+  become: true
+  loop: "{{ dataset_exists.results }}"
+  when: item.rc != 0
+
+- name: Update ZFS dataset properties for existing datasets
+  zfs:
+    name: "{{ item.item.name }}"
+    state: present
+    extra_zfs_properties: "{{ zfs_default_properties | combine(item.item.properties) }}"
+  become: true
+  loop: "{{ dataset_exists.results }}"
+  when: item.rc == 0
+
+- name: Create ZFS import systemd service
+  copy:
+    dest: /etc/systemd/system/zfs-import.service
+    content: |
+      [Unit]
+      Description=Import ZFS pools
+      After=systemd-udev-settle.service
+      Before=zfs-mount.service
+      
+      [Service]
+      Type=oneshot
+      ExecStart=/sbin/zpool import -a
+      RemainAfterExit=yes
+      
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  become: true
+  notify: reload systemd
+
+- name: Enable ZFS import service
+  systemd:
+    name: zfs-import
+    enabled: yes
+    daemon_reload: yes
   become: true
 
 - name: Setup monthly ZFS scrub
