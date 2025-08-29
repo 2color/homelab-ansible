@@ -1,6 +1,6 @@
 ---
 # ZFS pool configuration
-zfs_pool_name: "homelab-data"
+zfs_pool_name: "data"
 zfs_pool_device: "/dev/nvme0n1"
 
 # ZFS pool-level properties (applied at pool creation)
@@ -21,11 +21,8 @@ zfs_default_properties:
 
 # ZFS datasets configuration
 zfs_datasets:
-  - name: "{{ zfs_pool_name }}/docker"
-    mountpoint: "/data/docker"
-    properties: {}  # Uses all defaults
-  - name: "{{ zfs_pool_name }}/media"
-    mountpoint: "/data/media"
+  - name: "{{ zfs_pool_name }}/root"
+    mountpoint: "/data"
     properties: {}  # Uses all defaults
 
 # Migration settings

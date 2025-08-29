@@ -16,9 +16,9 @@
 
 - name: Add samba user
   shell: |
-    (echo "{{ vault_samba_password }}"; echo "{{ vault_samba_password }}") | smbpasswd -s -a {{ samba_username }}
+    (echo "{{ samba_password }}"; echo "{{ samba_password }}") | smbpasswd -s -a {{ samba_username }}
   # Only run if password is defined or not in check mode
-  when: vault_samba_password is defined or ansible_check_mode == false
+  when: samba_password is defined or ansible_check_mode == false
   # Don't log the password command
   no_log: true
 

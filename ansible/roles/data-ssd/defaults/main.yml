@@ -1,0 +1,24 @@
+---
+# Data SSD configuration
+data_ssd_device: "/dev/nvme0n1"
+data_ssd_mount_point: "/data"
+data_ssd_filesystem: "ext4"
+
+# Ext4 mkfs options for SSD optimization
+data_ssd_mkfs_options:
+  - "-F"  # Force creation
+  - "-E lazy_itable_init=0,lazy_journal_init=0"  # Speed up mkfs
+  - "-L {{ data_ssd_label }}"  # Set filesystem label
+
+# Mount options for SSD optimization
+data_ssd_mount_options:
+  - "defaults"
+  - "noatime"  # Don't update access times (better SSD performance)
+  - "discard"  # Enable TRIM support
+  - "errors=remount-ro"
+
+# Filesystem label
+data_ssd_label: "homelab-data"
+
+# Safety settings
+data_ssd_force_format: false  # Set to true to force formatting even if filesystem exists
