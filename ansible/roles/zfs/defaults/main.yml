@@ -3,20 +3,30 @@
 zfs_pool_name: "homelab-data"
 zfs_pool_device: "/dev/nvme0n1"
 
+# ZFS pool-level properties (applied at pool creation)
+zfs_pool_properties:
+  ashift: "12"  # 4K sectors for modern SSDs
+  autoexpand: "on"
+  autoreplace: "off"
+
+# Default ZFS filesystem properties (inherited by all datasets)
+zfs_default_properties:
+  compression: "lz4"
+  atime: "off"
+  checksum: "blake3"
+  primarycache: "all"  # Good for SSDs
+  secondarycache: "all"
+  sync: "standard"  # Better performance than always
+  recordsize: "128k"  # Good general purpose size for mixed workloads
+
 # ZFS datasets configuration
 zfs_datasets:
   - name: "{{ zfs_pool_name }}/docker"
     mountpoint: "/data/docker"
-    properties:
-      compression: "lz4"
-      atime: "off"
-      checksum: "sha256"
+    properties: {}  # Uses all defaults
   - name: "{{ zfs_pool_name }}/media"
     mountpoint: "/data/media"
-    properties:
-      compression: "lz4"
-      atime: "off"
-      checksum: "sha256"
+    properties: {}  # Uses all defaults
 
 # Migration settings
 zfs_backup_original: true
