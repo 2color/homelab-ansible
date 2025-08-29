@@ -6,5 +6,5 @@ tailscale_accept_routes: true
 tailscale_accept_dns: true
 tailscale_hostname: "{{ inventory_hostname }}"
 tailscale_shields_up: false
-tailscale_exit_node: false
+tailscale_exit_node: true
 tailscale_ssh: true  # Enable Tailscale SSH

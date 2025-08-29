@@ -56,7 +56,7 @@
   tags: tailscale
 
 
-- name: Authenticate Tailscale
+- name: Configure Tailscale
   command: >
     tailscale up
     {% if vault_tailscale_auth_key is defined %}--authkey={{ vault_tailscale_auth_key }}{% endif %}
@@ -68,7 +68,9 @@
     {% if tailscale_exit_node %}--advertise-exit-node{% endif %}
     {% if tailscale_ssh %}--ssh{% endif %}
   become: true
-  when: not tailscale_authenticated and vault_tailscale_auth_key is defined
+  when: vault_tailscale_auth_key is defined
+  register: tailscale_config_result
+  changed_when: true
   notify: restart tailscale
 
 - name: Display Tailscale status
