@@ -1,4 +1,12 @@
 ---
+- name: Validate Samba configuration
+  assert:
+    that:
+      - samba_username is defined and samba_username | length > 0
+      - vault_samba_password is defined and vault_samba_password | length > 0
+      - samba_shares is defined and samba_shares | length > 0
+    fail_msg: "Invalid Samba configuration - missing required variables"
+
 - name: Install Samba packages
   apt:
     name:
@@ -6,54 +14,95 @@
       - samba-common-bin
     state: present
     update_cache: yes
+  become: true
+
+- name: Create shared directories
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ samba_username }}"
+    group: "{{ samba_username }}"
+  become: true
+  loop: "{{ samba_shares }}"
 
 - name: Create samba configuration from template
   template:
     src: smb.conf.j2
     dest: /etc/samba/smb.conf
     backup: yes
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
   notify: restart samba
+
+- name: Check if Samba user exists
+  shell: pdbedit -L | grep "^{{ samba_username }}:"
+  register: samba_user_exists
+  failed_when: false
+  changed_when: false
+  become: true
 
 - name: Add samba user
   shell: |
-    (echo "{{ samba_password }}"; echo "{{ samba_password }}") | smbpasswd -s -a {{ samba_username }}
-  # Only run if password is defined or not in check mode
-  when: samba_password is defined or ansible_check_mode == false
-  # Don't log the password command
+    (echo "{{ vault_samba_password }}"; echo "{{ vault_samba_password }}") | smbpasswd -s -a {{ samba_username }}
+  become: true
+  when: samba_user_exists.rc != 0
   no_log: true
 
 - name: Enable samba user
   shell: smbpasswd -e {{ samba_username }}
-  ignore_errors: yes
+  become: true
+  when: samba_user_exists.rc != 0
+  register: enable_result
+  failed_when: enable_result.rc != 0
 
 - name: Start and enable samba services
   systemd:
     name: "{{ item }}"
     state: started
     enabled: yes
-  # Start both samba daemon and netbios daemon
+  become: true
   loop:
     - smbd
     - nmbd
+
+- name: Check if UFW is installed and active
+  command: ufw status
+  register: ufw_status
+  failed_when: false
+  changed_when: false
+  become: true
 
 - name: Allow Samba through firewall
   ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
-  # Open standard SMB ports (NetBIOS session and SMB over TCP)
+    comment: "Samba SMB"
+  become: true
   loop:
     - "139"
     - "445"
-  ignore_errors: yes
+  when:
+    - ufw_status.rc == 0
+    - "'Status: active' in ufw_status.stdout"
+  register: samba_tcp_firewall
+  failed_when: samba_tcp_firewall.failed and 'Could not update rules' not in samba_tcp_firewall.msg
 
 - name: Allow NetBIOS through firewall
   ufw:
     rule: allow
     port: "{{ item }}"
     proto: udp
-  # Open NetBIOS name service and datagram service ports
+    comment: "Samba NetBIOS"
+  become: true
   loop:
     - "137"
     - "138"
-  ignore_errors: yes
+  when:
+    - ufw_status.rc == 0
+    - "'Status: active' in ufw_status.stdout"
+  register: samba_udp_firewall
+  failed_when: samba_udp_firewall.failed and 'Could not update rules' not in samba_udp_firewall.msg

@@ -3,8 +3,7 @@
   systemd:
     name: "{{ item }}"
     state: restarted
+  become: true
   loop:
-    # smbd: Samba daemon for file sharing
-    # nmbd: NetBIOS name server daemon for network browsing
     - smbd
     - nmbd
