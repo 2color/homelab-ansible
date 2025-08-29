@@ -1,0 +1,59 @@
+---
+- name: Validate data SSD configuration
+  assert:
+    that:
+      - data_ssd_device is defined and data_ssd_device.startswith('/dev/')
+      - data_ssd_mount_point is defined and data_ssd_mount_point.startswith('/')
+      - data_ssd_filesystem is defined
+    fail_msg: "Invalid data SSD configuration detected"
+
+- name: Verify target device exists and is block device
+  stat:
+    path: "{{ data_ssd_device }}"
+  register: ssd_device_stat
+  failed_when: not ssd_device_stat.stat.exists or not ssd_device_stat.stat.isblk
+
+- name: Check if device already has a filesystem
+  command: blkid {{ data_ssd_device }}
+  register: existing_filesystem
+  failed_when: false
+  changed_when: false
+
+- name: Display existing filesystem warning
+  debug:
+    msg: "WARNING: Device {{ data_ssd_device }} already has a filesystem. Use data_ssd_force_format=true to overwrite."
+  when: existing_filesystem.rc == 0 and not data_ssd_force_format
+
+- name: Create ext4 filesystem on SSD
+  filesystem:
+    fstype: "{{ data_ssd_filesystem }}"
+    dev: "{{ data_ssd_device }}"
+    opts: "{{ data_ssd_mkfs_options | join(' ') }}"
+    force: "{{ data_ssd_force_format }}"
+  become: true
+  when: existing_filesystem.rc != 0 or data_ssd_force_format
+
+- name: Create mount point directory
+  file:
+    path: "{{ data_ssd_mount_point }}"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Mount the SSD filesystem
+  mount:
+    path: "{{ data_ssd_mount_point }}"
+    src: "{{ data_ssd_device }}"
+    fstype: "{{ data_ssd_filesystem }}"
+    opts: "{{ data_ssd_mount_options | join(',') }}"
+    state: mounted
+  become: true
+
+- name: Verify mount is successful
+  command: df -h {{ data_ssd_mount_point }}
+  register: mount_status
+  changed_when: false
+
+- name: Display mount information
+  debug:
+    msg: "{{ mount_status.stdout_lines }}"

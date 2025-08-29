@@ -90,7 +90,7 @@ The homelab uses Tailscale for secure remote access without exposing services to
 #### Configuration
 - **Auth Key**: Stored securely in `vault_tailscale_auth_key` (Ansible vault)
 - **Username**: Configurable via `samba_username` variable (default: `daniel`)  
-- **Password**: Stored securely in `vault_samba_password` (Ansible vault)
+- **Password**: Stored securely in `samba_password` (Ansible vault)
 - **Installation**: Managed by Ansible role in the main playbook
 
 #### Setup Steps

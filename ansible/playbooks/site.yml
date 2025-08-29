@@ -13,7 +13,10 @@
   
   roles:
     - geerlingguy.docker
-    - { role: zfs, tags: zfs }
+    - role: data-ssd
+      tags: data-ssd
+    - role: samba
+      tags: samba
     - docker
     - cockpit
     - portainer
@@ -21,7 +24,7 @@
     - plex
     - ytdl-sub
     - homelab-dashboard
-    - samba
+
     - { role: tailscale, tags: tailscale }
 
   post_tasks:
