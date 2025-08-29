@@ -4,8 +4,8 @@ samba_workgroup: WORKGROUP
 samba_server_string: "Homelab Samba Server"
 samba_netbios_name: "homelab-1"
 
-# Network access restriction
-samba_hosts_allow: "192.168.1."
+# Network access restriction (allows both local network and Tailscale)
+samba_hosts_allow: "192.168.1. 100.64.0.0/10"  # Local subnet + Tailscale CGNAT range
 samba_hosts_deny: "ALL"
 
 # User configuration - credentials stored in vault
