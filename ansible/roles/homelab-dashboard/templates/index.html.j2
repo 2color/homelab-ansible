@@ -77,36 +77,36 @@
     <div class="container">
         <h1>Homelab Services Dashboard</h1>
         <div class="server-info">
-            <strong>Server:</strong> {{ ansible_hostname | default('homelab-1') }} 
-            (<strong>{{ ansible_host }}</strong>)
+            <strong>Server:</strong> {{ ansible_hostnamename | default('homelab-1') }}
+            (<strong>{{ ansible_hostname }}</strong>)
         </div>
         
         <div class="services-grid">
-            <a href="https://{{ ansible_host }}:{{ cockpit_port }}" class="service-card" target="_blank">
+            <a href="https://{{ ansible_hostname }}:{{ cockpit_port }}" class="service-card" target="_blank">
                 <div class="service-name">Cockpit</div>
                 <div class="service-description">System management and monitoring interface</div>
                 <div class="service-port">:{{ cockpit_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:{{ portainer_port }}" class="service-card" target="_blank">
+            <a href="http://{{ ansible_hostname }}:{{ portainer_port }}" class="service-card" target="_blank">
                 <div class="service-name">Portainer</div>
                 <div class="service-description">Docker container management</div>
                 <div class="service-port">:{{ portainer_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:{{ sabnzbd_port }}" class="service-card" target="_blank">
+            <a href="http://{{ ansible_hostname }}:{{ sabnzbd_port }}" class="service-card" target="_blank">
                 <div class="service-name">SABnzbd</div>
                 <div class="service-description">Usenet downloader and processor</div>
                 <div class="service-port">:{{ sabnzbd_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:{{ plex_port }}/web" class="service-card" target="_blank">
+            <a href="http://{{ ansible_hostname }}:{{ plex_port }}/web" class="service-card" target="_blank">
                 <div class="service-name">Plex Media Server</div>
                 <div class="service-description">Media streaming and library management</div>
                 <div class="service-port">:{{ plex_port }}</div>
             </a>
 
-            <a href="http://{{ ansible_host }}:{{ ytdl_sub_port }}" class="service-card" target="_blank">
+            <a href="http://{{ ansible_hostname }}:{{ ytdl_sub_port }}" class="service-card" target="_blank">
                 <div class="service-name">ytdl-sub</div>
                 <div class="service-description">YouTube downloader with subscription management</div>
                 <div class="service-port">:{{ ytdl_sub_port }}</div>

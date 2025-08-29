@@ -23,7 +23,8 @@
     - sabnzbd
     - plex
     - ytdl-sub
-    - homelab-dashboard
+    - role: homelab-dashboard
+      tags: dashboard
 
     - { role: tailscale, tags: tailscale }
 
