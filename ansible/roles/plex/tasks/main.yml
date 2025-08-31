@@ -22,9 +22,9 @@
     image: lscr.io/linuxserver/plex:latest
     state: started
     restart_policy: always
+    recreate: true
     ports:
       - "{{ plex_port }}:32400"
-      - "1900:1900/udp"
       - "3005:3005"
       - "5353:5353/udp"
       - "8324:8324"
