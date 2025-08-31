@@ -58,6 +58,14 @@
   register: enable_result
   failed_when: enable_result.rc != 0
 
+- name: Update samba user password
+  shell: |
+    (echo "{{ vault_samba_password }}"; echo "{{ vault_samba_password }}") | smbpasswd -s {{ samba_username }}
+  become: true
+  when: samba_user_exists.rc == 0
+  no_log: true
+  tags: samba_password
+
 - name: Start and enable samba services
   systemd:
     name: "{{ item }}"
@@ -85,7 +93,7 @@
   loop:
     - "139"
     - "445"
-  when:
+  when: 
     - ufw_status.rc == 0
     - "'Status: active' in ufw_status.stdout"
   register: samba_tcp_firewall
@@ -101,7 +109,7 @@
   loop:
     - "137"
     - "138"
-  when:
+  when: 
     - ufw_status.rc == 0
     - "'Status: active' in ufw_status.stdout"
   register: samba_udp_firewall
