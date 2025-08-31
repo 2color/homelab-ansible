@@ -1,0 +1,48 @@
+---
+- name: Create Jellyfin config directory
+  file:
+    path: /opt/docker-data/jellyfin/config
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create Jellyfin cache directory
+  file:
+    path: /opt/docker-data/jellyfin/cache
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Deploy Jellyfin Media Server container
+  docker_container:
+    name: jellyfin
+    image: lscr.io/linuxserver/jellyfin:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ jellyfin_port }}:8096"
+      - "8920:8920"
+      - "7359:7359/udp"
+      - "1900:1900/udp"
+    env:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "{{ timezone | default('UTC') }}"
+    volumes:
+      - /opt/docker-data/jellyfin/config:/config
+      - /opt/docker-data/jellyfin/cache:/cache
+      - /opt/docker-data/sabnzbd/downloads:/media
+      - /opt/docker-data/ytdl-sub:/ytdl-sub
+    networks:
+      - name: homelab-network
+    devices:
+      - /dev/dri:/dev/dri  # For hardware transcoding if available
+
+- name: Allow Jellyfin through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: "{{ jellyfin_port }}"
+    proto: tcp
+  ignore_errors: yes

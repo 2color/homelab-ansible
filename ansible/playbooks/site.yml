@@ -22,6 +22,7 @@
     - portainer
     - sabnzbd
     - plex
+    - jellyfin
     - ytdl-sub
     - role: homelab-dashboard
       tags: dashboard
@@ -38,5 +39,6 @@
           - Portainer: http://{{ ansible_host }}:9000
           - SABnzbd: http://{{ ansible_host }}:8080
           - Plex: http://{{ ansible_host }}:32400/web
+          - Jellyfin: http://{{ ansible_host }}:8096
           - ytdl-sub: http://{{ ansible_host }}:8443
           - Samba share: \\{{ ansible_host }}\docker-data
