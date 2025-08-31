@@ -106,6 +106,12 @@
                 <div class="service-port">:{{ plex_port }}</div>
             </a>
 
+            <a href="http://{{ ansible_hostname }}:{{ jellyfin_port }}" class="service-card" target="_blank">
+                <div class="service-name">Jellyfin</div>
+                <div class="service-description">Open-source media server and streaming platform</div>
+                <div class="service-port">:{{ jellyfin_port }}</div>
+            </a>
+
             <a href="http://{{ ansible_hostname }}:{{ ytdl_sub_port }}" class="service-card" target="_blank">
                 <div class="service-name">ytdl-sub</div>
                 <div class="service-description">YouTube downloader with subscription management</div>
