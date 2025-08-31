@@ -22,7 +22,8 @@
     - portainer
     - sabnzbd
     - plex
-    - jellyfin
+    - role: jellyfin
+      tags: jellyfin
     - ytdl-sub
     - role: homelab-dashboard
       tags: dashboard
