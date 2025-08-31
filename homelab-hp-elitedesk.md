@@ -35,6 +35,13 @@
 
 The homelab runs the following services managed by Ansible:
 
+### Recent Updates
+- **Jellyfin Added**: Added Jellyfin as a second media server alongside Plex
+  - Uses same media volumes as Plex for seamless content access
+  - Hardware transcoding enabled with `/dev/dri` device mapping  
+  - Integrated into homelab dashboard and deployment pipeline
+  - UPnP/DLNA discovery on port 1900/udp (reassigned from Plex to avoid conflicts)
+
 ### Core Infrastructure
 - **Docker**: Container runtime (geerlingguy.docker role)
 - **Cockpit**: System management web interface (port 9090)
@@ -44,6 +51,7 @@ The homelab runs the following services managed by Ansible:
 
 ### Media Services
 - **Plex Media Server**: Media streaming with Intel Quick Sync transcoding (port 32400)
+- **Jellyfin**: Open-source media server and streaming platform (port 8096)
 - **SABnzbd**: Usenet downloader (port 8080)
 - **ytdl-sub**: YouTube downloader service (port 8443)
 
@@ -62,6 +70,7 @@ The homelab runs the following services managed by Ansible:
 - Portainer: http://192.168.1.36:9000
 - SABnzbd: http://192.168.1.36:8080
 - Plex: http://192.168.1.36:32400/web
+- Jellyfin: http://192.168.1.36:8096
 - ytdl-sub: http://192.168.1.36:8443
 
 ## Ansible setup
