@@ -1,0 +1,57 @@
+---
+# Synology NAS configuration defaults
+
+# NAS connection details
+nas_hostname: "nas2color"
+nas_workgroup: "WORKGROUP"
+
+# Credentials file location and permissions
+nas_credentials_file: "/etc/cifs-credentials"
+nas_credentials_mode: "0600"
+nas_credentials_owner: "root"
+nas_credentials_group: "root"
+
+# User context for mounts (will be determined at runtime)
+nas_mount_uid: "{{ ansible_user_uid | default(1000) }}"
+nas_mount_gid: "{{ ansible_user_gid | default(1000) }}"
+
+# Mount options optimized for network storage and security
+nas_mount_options:
+  - "credentials={{ nas_credentials_file }}"
+  - "vers=3.0"           # Use SMB 3.0 protocol (secure)
+  - "sec=ntlmssp"        # Use NTLMv2 authentication
+  - "uid={{ nas_mount_uid }}"        # User ID for file ownership
+  - "gid={{ nas_mount_gid }}"        # Group ID for file ownership
+  - "file_mode=0644"     # File permissions
+  - "dir_mode=0755"      # Directory permissions
+  - "iocharset=utf8"     # Character encoding
+  - "rsize=65536"        # Read buffer size (64KB - optimal for DS216play)
+  - "wsize=65536"        # Write buffer size (64KB - optimal for DS216play)
+  - "echo_interval=60"   # Keep connections alive
+  - "noperm"             # Don't check permissions on server
+  - "cache=strict"       # Enable client-side caching
+
+# Default shares to mount
+# Required vault variables (add to inventories/homelab/group_vars/vault.yml):
+# - vault_nas_username: Synology user account name
+# - vault_nas_password: Account password  
+# - vault_nas_domain: Domain/workgroup (optional, defaults to nas_workgroup)
+#
+# Configuration Guide:
+# 1. Find your Synology share names in DSM: Control Panel → Shared Folder
+# 2. The share name in 'path' must match exactly what exists on your Synology
+# 3. Common default Synology shares: homes, photo, music, video
+# 4. 'name' is just a local identifier (can be anything)
+# 5. 'mount_point' is where the share appears on your homelab server
+nas_shares:
+  - name: "backup"                              # Local identifier for Ansible
+    path: "//{{ nas_hostname }}/Daniel"         # Must match actual Synology share name
+    mount_point: "/nas/daniel"              # Mount location on homelab server
+    comment: "Daniel"
+
+
+# Base mount directory
+nas_base_mount_dir: "/nas"
+
+# Safety settings
+nas_force_remount: false  # Set to true to force remounting even if already mounted

@@ -27,6 +27,8 @@
     - ytdl-sub
     - role: homelab-dashboard
       tags: dashboard
+    - role: synology-nas
+      tags: nas
 
     - { role: tailscale, tags: tailscale }
 
@@ -43,3 +45,4 @@
           - Jellyfin: http://{{ ansible_host }}:8096
           - ytdl-sub: http://{{ ansible_host }}:8443
           - Samba share: \\{{ ansible_host }}\docker-data
+          - NAS mounts: Check /mnt/nas/ for mounted Synology shares
