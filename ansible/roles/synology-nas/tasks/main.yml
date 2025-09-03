@@ -1,0 +1,146 @@
+---
+- name: Validate Synology NAS configuration
+  assert:
+    that:
+      - nas_hostname is defined and nas_hostname | length > 0
+      - vault_nas_username is defined and vault_nas_username | length > 0
+      - vault_nas_password is defined and vault_nas_password | length > 0
+      - nas_shares is defined and nas_shares | length > 0
+    fail_msg: "Invalid Synology NAS configuration - missing required variables"
+
+- name: Install CIFS utilities
+  apt:
+    name:
+      - cifs-utils
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Create base NAS mount directory
+  file:
+    path: "{{ nas_base_mount_dir }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Create individual mount point directories
+  file:
+    path: "{{ item.mount_point }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+  loop: "{{ nas_shares }}"
+
+- name: Create CIFS credentials file
+  template:
+    src: cifs-credentials.j2
+    dest: "{{ nas_credentials_file }}"
+    mode: "{{ nas_credentials_mode }}"
+    owner: "{{ nas_credentials_owner }}"
+    group: "{{ nas_credentials_group }}"
+    backup: no
+  become: true
+  no_log: true
+  notify: remount nas shares
+
+- name: Create systemd mount units for NAS shares
+  template:
+    src: nas-share.mount.j2
+    dest: "/etc/systemd/system/{{ item.mount_point | regex_replace('/', '-') | regex_replace('^-', '') }}.mount"
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  loop: "{{ nas_shares }}"
+  notify:
+    - reload systemd
+    - restart nas mounts
+
+- name: Enable and start NAS mount units
+  systemd:
+    name: "{{ item.mount_point | regex_replace('/', '-') | regex_replace('^-', '') }}.mount"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
+  loop: "{{ nas_shares }}"
+  register: mount_result
+
+- name: Verify mounts are accessible
+  command: timeout 10 ls {{ item.mount_point }}
+  register: mount_test
+  changed_when: false
+  failed_when: false
+  loop: "{{ nas_shares }}"
+
+- name: Display mount status
+  debug:
+    msg: >-
+      Share {{ item.name }}: 
+      {%- if mount_test.results[my_idx].rc == 0 -%}
+      Successfully mounted at {{ item.mount_point }}
+      {%- else -%}
+      Failed to access {{ item.mount_point }} - check systemd status
+      {%- endif -%}
+  loop: "{{ nas_shares }}"
+  loop_control:
+    index_var: my_idx
+
+- name: Add health check task
+  command: timeout 10 ls {{ item.mount_point }}
+  register: health_check
+  failed_when: false
+  changed_when: false
+  loop: "{{ nas_shares }}"
+  tags: health-check
+
+- name: Report health check results
+  debug:
+    msg: >-
+      Share {{ item.name }}: 
+      {%- if health_check.results[my_idx].rc == 0 -%}
+      HEALTHY
+      {%- else -%}
+      UNHEALTHY - Use 'journalctl -u {{ item.mount_point | regex_replace('/', '-') | regex_replace('^-', '') }}.mount' for details
+      {%- endif -%}
+  loop: "{{ nas_shares }}"
+  loop_control:
+    index_var: my_idx
+  tags: health-check
+
+- name: Validate backup share is writable
+  file:
+    path: "{{ item.mount_point }}/ansible-test-{{ ansible_date_time.epoch }}"
+    state: touch
+    mode: '0644'
+  register: backup_write_test
+  failed_when: false
+  loop: "{{ nas_shares }}"
+  when: "'backup' in item.name"
+
+- name: Clean up test files
+  file:
+    path: "{{ item.mount_point }}/ansible-test-{{ ansible_date_time.epoch }}"
+    state: absent
+  loop: "{{ nas_shares }}"
+  loop_control:
+    index_var: my_idx
+  when: "'backup' in item.name and backup_write_test.results[my_idx] is defined"
+
+- name: Report backup share write test results
+  debug:
+    msg: >-
+      Backup share {{ item.name }}: 
+      {%- if backup_write_test.results[my_idx].failed | default(true) -%}
+      NOT WRITABLE - Check permissions and credentials
+      {%- else -%}
+      WRITABLE - Ready for backup operations
+      {%- endif -%}
+  loop: "{{ nas_shares }}"
+  loop_control:
+    index_var: my_idx
+  when: "'backup' in item.name"

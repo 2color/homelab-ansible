@@ -48,6 +48,7 @@ The homelab runs the following services managed by Ansible:
 - **Portainer**: Container management interface (port 9000)
 - **Tailscale**: Mesh VPN for secure remote access
 - **Samba**: File sharing server for `/opt/docker-data/` directory
+- **Synology NAS**: Network-attached storage mounts via systemd units
 
 ### Media Services
 - **Plex Media Server**: Media streaming with Intel Quick Sync transcoding (port 32400)
@@ -240,6 +241,39 @@ Intel vPro with Active Management Technology (AMT) provides:
 
 - NFS/SMB network shares (recommended)
 - Direct USB connection not supported (self-contained system)
+
+#### Synology NAS Mounting (Ansible Role)
+
+The homelab includes an automated Synology NAS mounting solution using systemd mount units for reliable network storage access.
+
+**Role Features:**
+- **Security-First**: SMB 3.0 protocol with NTLMv2 authentication and encryption
+- **Systemd Integration**: Mount units instead of fstab for better logging and management
+- **Performance Optimized**: 1MB buffers and network resilience options
+- **Health Monitoring**: Built-in health checks and backup share validation
+
+**Configuration:**
+- **Mount Points**: `/mnt/nas/backup` and `/mnt/nas/media`
+- **Credentials**: Stored securely in Ansible vault (`vault_nas_username`, `vault_nas_password`)
+- **Monitoring**: Use `journalctl -u mnt-nas-backup.mount` for detailed logs
+
+**Deployment:**
+```bash
+# Deploy NAS mounts only
+cd ansible && ansible-playbook playbooks/site.yml --tags nas --ask-vault-pass
+
+# Check mount status  
+ansible homelab-1 -m shell -a "systemctl status mnt-nas-backup.mount"
+
+# Run health checks
+cd ansible && ansible-playbook playbooks/site.yml --tags health-check --ask-vault-pass
+```
+
+**Mount Options (Security & Performance):**
+- SMB 3.0 encryption in transit (`seal`, `vers=3.0`)
+- Large network buffers (1MB read/write)
+- Connection keepalive (`echo_interval=60`)
+- Dynamic user context (uses actual ansible user UID/GID)
 
 ### File Sharing for Mac Clients
 

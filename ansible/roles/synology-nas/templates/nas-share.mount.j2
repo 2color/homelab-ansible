@@ -1,0 +1,14 @@
+[Unit]
+Description={{ item.comment }}
+After=network-online.target
+Wants=network-online.target
+Requires=network.target
+
+[Mount]
+What={{ item.path }}
+Where={{ item.mount_point }}
+Type=cifs
+Options={{ nas_mount_options | join(',') }}
+
+[Install]
+WantedBy=multi-user.target

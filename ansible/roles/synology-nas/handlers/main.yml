@@ -1,0 +1,21 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: restart nas mounts
+  systemd:
+    name: "{{ item.mount_point | regex_replace('/', '-') | regex_replace('^-', '') }}.mount"
+    state: restarted
+  become: true
+  loop: "{{ nas_shares }}"
+  listen: "restart nas mounts"
+
+- name: remount nas shares
+  systemd:
+    name: "{{ item.mount_point | regex_replace('/', '-') | regex_replace('^-', '') }}.mount"
+    state: restarted
+  become: true
+  loop: "{{ nas_shares }}"
+  listen: "remount nas shares"
