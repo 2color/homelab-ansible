@@ -20,8 +20,9 @@
     - docker
     - cockpit
     - portainer
-    - sabnzbd
     - plex
+    - role: sabnzbd
+      tags: sabnzbd
     - role: jellyfin
       tags: jellyfin
     - ytdl-sub

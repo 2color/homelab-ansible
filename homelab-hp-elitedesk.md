@@ -36,13 +36,15 @@
 The homelab runs the following services managed by Ansible:
 
 ### Recent Updates
+
 - **Jellyfin Added**: Added Jellyfin as a second media server alongside Plex
   - Uses same media volumes as Plex for seamless content access
-  - Hardware transcoding enabled with `/dev/dri` device mapping  
+  - Hardware transcoding enabled with `/dev/dri` device mapping
   - Integrated into homelab dashboard and deployment pipeline
   - UPnP/DLNA discovery on port 1900/udp (reassigned from Plex to avoid conflicts)
 
 ### Core Infrastructure
+
 - **Docker**: Container runtime (geerlingguy.docker role)
 - **Cockpit**: System management web interface (port 9090)
 - **Portainer**: Container management interface (port 9000)
@@ -51,21 +53,24 @@ The homelab runs the following services managed by Ansible:
 - **Synology NAS**: Network-attached storage mounts via systemd units
 
 ### Media Services
+
 - **Plex Media Server**: Media streaming with Intel Quick Sync transcoding (port 32400)
 - **Jellyfin**: Open-source media server and streaming platform (port 8096)
 - **SABnzbd**: Usenet downloader (port 8080)
 - **ytdl-sub**: YouTube downloader service (port 8443)
 
 ### Dashboard
+
 - **Homelab Dashboard**: Main landing page served by Caddy (port 80)
   - Uses Caddy Alpine container as a static file server
-  - HTML generated from Jinja2 template (`index.html.j2`) 
+  - HTML generated from Jinja2 template (`index.html.j2`)
   - Template dynamically includes service URLs using Ansible variables
   - Responsive grid layout with hover effects
   - Displays server hostname and IP address
   - Links to all configured services with descriptions
 
 ### Service URLs
+
 - Dashboard: http://192.168.1.36
 - Cockpit: https://192.168.1.36:9090
 - Portainer: http://192.168.1.36:9000
@@ -81,9 +86,9 @@ See other notes.
 ### notes on AMT and MeshCommander
 
 - AMT (Active Management Technology) allows remote management of the system, including power control.
-- Remote desktop works pretty well, but it requires that a screen is connected to the EliteDesk which is a bit of a bummer.
+- Remote desktop works pretty well, but it requires that a screen is connected  to the EliteDesk which is a bit annoying.
 - You can still power on the system and access the BIOS remotely without a screen.
-- Solution: Use a dummy HDMI plug to trick the system into thinking a monitor is connected.
+- A DisplayPort emulator (dummy plug) to enable remote desktop via AMT without needing a physical monitor connected.
 
 ## Remote Access
 
@@ -92,23 +97,27 @@ See other notes.
 The homelab uses Tailscale for secure remote access without exposing services to the public internet.
 
 #### Features Enabled
+
 - **Tailscale SSH**: Secure SSH access without local SSH keys or port forwarding
-- **DNS Integration**: Accept DNS settings from Tailscale for easy service discovery  
+- **DNS Integration**: Accept DNS settings from Tailscale for easy service discovery
 - **Route Acceptance**: Can access other devices on the Tailscale network
 - **Hostname**: Uses inventory hostname (`homelab-1`) for easy identification
 
 #### Configuration
+
 - **Auth Key**: Stored securely in `vault_tailscale_auth_key` (Ansible vault)
-- **Username**: Configurable via `samba_username` variable (default: `daniel`)  
+- **Username**: Configurable via `samba_username` variable (default: `daniel`)
 - **Password**: Stored securely in `samba_password` (Ansible vault)
 - **Installation**: Managed by Ansible role in the main playbook
 
 #### Setup Steps
+
 1. Get auth key from https://login.tailscale.com/admin/settings/keys
 2. Add to vault: `ansible-vault edit ansible/inventories/homelab/group_vars/vault.yml`
 3. Deploy: `cd ansible && ansible-playbook playbooks/site.yml --tags tailscale --ask-vault-pass`
 
 #### Benefits Over Port Forwarding
+
 - No router configuration required
 - End-to-end encryption for all traffic
 - Works from any network (coffee shops, hotels, etc.)
@@ -247,22 +256,25 @@ Intel vPro with Active Management Technology (AMT) provides:
 The homelab includes an automated Synology NAS mounting solution using systemd mount units for reliable network storage access.
 
 **Role Features:**
-- **Security-First**: SMB 3.0 protocol with NTLMv2 authentication and encryption
+
+- **Security-First**: SMB 3.0 protocol with NTLMv2 authentication
 - **Systemd Integration**: Mount units instead of fstab for better logging and management
 - **Performance Optimized**: 1MB buffers and network resilience options
 - **Health Monitoring**: Built-in health checks and backup share validation
 
 **Configuration:**
+
 - **Mount Points**: `/mnt/nas/backup` and `/mnt/nas/media`
 - **Credentials**: Stored securely in Ansible vault (`vault_nas_username`, `vault_nas_password`)
 - **Monitoring**: Use `journalctl -u mnt-nas-backup.mount` for detailed logs
 
 **Deployment:**
+
 ```bash
 # Deploy NAS mounts only
 cd ansible && ansible-playbook playbooks/site.yml --tags nas --ask-vault-pass
 
-# Check mount status  
+# Check mount status
 ansible homelab-1 -m shell -a "systemctl status mnt-nas-backup.mount"
 
 # Run health checks
@@ -270,35 +282,39 @@ cd ansible && ansible-playbook playbooks/site.yml --tags health-check --ask-vaul
 ```
 
 **Mount Options (Security & Performance):**
-- SMB 3.0 encryption in transit (`seal`, `vers=3.0`)
+
+- SMB 3.0 protocol (`vers=3.0`)
 - Large network buffers (1MB read/write)
 - Connection keepalive (`echo_interval=60`)
 - Dynamic user context (uses actual ansible user UID/GID)
+
+**Performance Optimization Update:**
+
+- **Encryption Disabled**: Removed `seal` option to significantly improve transfer speeds
 
 ### File Sharing for Mac Clients
 
 When sharing files from the homelab to Mac clients, there are several protocol options with different performance characteristics:
 
 #### NFS (Network File System)
+
 - **Performance:** Generally fastest for large file transfers
 - **macOS Support:** Native support, but requires manual configuration
 - **Setup:** More complex configuration, requires NFS server setup
 - **Use Case:** Best for bulk data transfers and server-to-server communication
 
 #### SMB/CIFS (Server Message Block)
-- **Performance:** Good performance, especially SMB3+ with modern implementations
+
+- **Performance:** Good performance, especially SMB3+ with modern implementations.
 - **macOS Support:** Native Finder integration, easy mounting
-- **Setup:** Simpler configuration with Samba
-- **Use Case:** Best balance of performance and ease of use for mixed environments
-- **Recommendation:** Use SMB3 or higher for better performance and security
 
 #### AFP (Apple Filing Protocol)
+
 - **Performance:** Historically optimized for Mac but now deprecated
 - **macOS Support:** Legacy support only (deprecated since macOS 10.9)
-- **Setup:** Not recommended for new deployments
-- **Use Case:** Legacy Mac environments only
 
 #### Performance Considerations
+
 - **macOS Finder Limitations:** Be aware that Finder has known performance issues with network file copies
 - **Reference:** [macOS Finder is still bad at network file copies](https://www.jeffgeerling.com/blog/2024/macos-finder-still-bad-network-file-copies)
 - **Workaround:** Use command-line tools (`rsync`, `cp`) or third-party file managers for better performance
@@ -308,6 +324,7 @@ When sharing files from the homelab to Mac clients, there are several protocol o
 The homelab includes a Samba file server that shares `/opt/docker-data/` with both guest and authenticated access.
 
 #### Configuration Details
+
 - **Share Name:** `docker-data`
 - **Path:** `/opt/docker-data/`
 - **Guest Access:** Read-only for anonymous users
@@ -315,6 +332,7 @@ The homelab includes a Samba file server that shares `/opt/docker-data/` with bo
 - **Network Restriction:** Limited to 192.168.1.x subnet
 
 #### macOS-Specific Samba Settings
+
 To ensure compatibility with macOS clients, the following settings are configured:
 
 ```ini
@@ -336,23 +354,28 @@ fruit:model = MacSamba
 **Error: "The operation can't be completed because the original item for 'docker-data' can't be found"**
 
 This typically indicates:
+
 1. **Directory permissions issue** - The shared directory may not have proper read permissions
 2. **Guest access misconfiguration** - Anonymous access may not be properly enabled
 3. **Path resolution problem** - The share path may not be accessible to the samba process
 
 **Troubleshooting Steps:**
+
 1. **Verify directory exists and has proper permissions:**
+
    ```bash
    ls -la /opt/docker-data/
    # Should show readable permissions for the samba process
    ```
 
 2. **Check Samba service status:**
+
    ```bash
    systemctl status smbd nmbd
    ```
 
 3. **Test connection from macOS terminal:**
+
    ```bash
    # Test SMB connection
    smbutil view //192.168.1.36
@@ -374,10 +397,12 @@ If you see errors like "parse_dfs_path_strict: can't parse hostname from path", 
 #### Connection Methods
 
 **From macOS Finder:**
+
 - Press `Cmd+K` and enter: `smb://192.168.1.36/docker-data`
 - Or: `smb://guest@192.168.1.36/docker-data` for explicit guest access
 
 **From macOS Terminal:**
+
 ```bash
 # List available shares
 smbutil view //192.168.1.36
@@ -421,4 +446,4 @@ It may be nice to try ZFS for the second SSD drive in the HP EliteDesk. Seems a 
 ### Ideas and Inspiration
 
 - https://perfectmediaserver.com/04
-- 
+-
