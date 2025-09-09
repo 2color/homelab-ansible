@@ -34,6 +34,8 @@
       - /opt/docker-data/jellyfin/config:/config
       - /opt/docker-data/jellyfin/cache:/cache
       - /opt/docker-data/sabnzbd/downloads:/media
+      - /data/movies:/data/movies
+      - /data/tv:/data/tv
       - /opt/docker-data/ytdl-sub:/ytdl-sub
     networks:
       - name: homelab-network

@@ -38,6 +38,8 @@
     volumes:
       - /opt/docker-data/sabnzbd/config:/config
       - /opt/docker-data/sabnzbd/downloads:/downloads
+      - /data/movies:/downloads/movies
+      - /data/tv:/downloads/tv
       - /opt/docker-data/sabnzbd/incomplete:/incomplete-downloads
     networks:
       - name: homelab-network
