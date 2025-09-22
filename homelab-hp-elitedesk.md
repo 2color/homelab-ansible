@@ -422,6 +422,10 @@ Still undecided on the backup strategy, but considering the following options:
 - [BorgBackup](https://github.com/borgbackup/borg)
 - Restic vs BorgBackup: https://github.com/restic/restic/issues/1875
 - https://stickleback.dk/borg-or-restic/
+- Maybe https://github.com/gilbertchen/duplicacy?tab=readme-ov-file
+- https://mangohost.net/blog/duplicacy-vs-restic-vs-borg-which-backup-tool-is-right-in-2025/
+- https://forum.duplicati.com/t/big-comparison-borg-vs-restic-vs-arq-5-vs-duplicacy-vs-duplicati/9952?u=tophee
+- https://forum.duplicacy.com/t/comparison-duplicacy-borg-restic-arq-duplicati/4210/12
 
 ### ZFS Features that might be useful
 
@@ -431,6 +435,8 @@ It may be nice to try ZFS for the second SSD drive in the HP EliteDesk. Seems a 
 **Advanced Features:** Snapshots, compression, deduplication
 **Integration:** Available through Proxmox
 **Benefits:** Data integrity, flexible storage management
+
+Conclusion: Not worth it for a single SSD. But could be useful for a RAID setup.
 
 ## References
 
@@ -442,8 +448,23 @@ It may be nice to try ZFS for the second SSD drive in the HP EliteDesk. Seems a 
 ### Community Resources
 
 - [Proxmox vs Alternatives Discussion](https://www.reddit.com/r/homelab/comments/1h54vhg/what_are_the_pros_and_cons_for_choosing_proxmox/)
+- [Backup tools](https://www.reddit.com/r/Backup/comments/1gszsvi/list_of_free_open_source_and_crossplatform_backup/)
 
-### Ideas and Inspiration
+### Inspiration
 
 - https://perfectmediaserver.com/04
--
+
+#### Adding More Drives to the EliteDesk
+
+
+- [Terramaster D4-320 USB 3.2 DAS Review](https://www.youtube.com/watch?v=ZdEqEWiA2CE)
+- [hp_elitedesk_800_g4_mini_the_ultimate_4drive_setup/](https://www.reddit.com/r/homelab/comments/1e913vb/hp_elitedesk_800_g4_mini_the_ultimate_4drive_setup/)
+- 3D print an enclosure for the EliteDesk: https://makerworld.com/en/models/1399535-thinknas-4x-hdd-nas-enclosure-for-lenovo-m920q#profileId-1589394
+- https://www.reddit.com/r/homelab/comments/1hnniwe/stuffing_4x_ssds_in_a_hp_elitedesk_800_g4_micro/
+
+
+## Next Steps
+
+
+- [] Add an external DAS with HDDs for long term storage (e.g., Terramaster D4-320)
+- [] Setup automated backups (restic/borg)
