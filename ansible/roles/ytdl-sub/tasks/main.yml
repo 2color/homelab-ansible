@@ -65,4 +65,4 @@
     rule: allow
     port: "{{ ytdl_sub_port }}"
     proto: tcp
-  ignore_errors: yes
+  when: enable_ufw | default(false)

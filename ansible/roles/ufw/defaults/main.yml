@@ -1,0 +1,19 @@
+---
+# UFW firewall configuration defaults
+
+# SSH configuration
+ufw_ssh_port: "22"
+ufw_ssh_rate_limit: true
+
+# Logging level: 'on', 'off', 'low', 'medium', 'high', 'full'
+ufw_logging: 'low'
+
+# Allow routed traffic (useful for Docker, VMs, etc.)
+ufw_allow_routed: true
+
+# Additional ports to allow
+ufw_allowed_tcp_ports: []
+ufw_allowed_udp_ports: []
+
+# Set to true to reset UFW rules (use with caution)
+ufw_reset: false

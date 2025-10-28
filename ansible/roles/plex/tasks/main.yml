@@ -56,4 +56,4 @@
     rule: allow
     port: "{{ plex_port }}"
     proto: tcp
-  ignore_errors: yes
+  when: enable_ufw | default(false)

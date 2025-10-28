@@ -1,0 +1,90 @@
+---
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Reset UFW to clean state
+  ufw:
+    state: reset
+  become: true
+  when: ufw_reset | default(false)
+
+- name: Configure UFW defaults - deny incoming
+  ufw:
+    direction: incoming
+    policy: deny
+  become: true
+  notify: reload ufw
+
+- name: Configure UFW defaults - allow outgoing
+  ufw:
+    direction: outgoing
+    policy: allow
+  become: true
+  notify: reload ufw
+
+- name: Configure UFW defaults - allow routed
+  ufw:
+    direction: routed
+    policy: allow
+  become: true
+  notify: reload ufw
+  when: ufw_allow_routed | default(false)
+
+- name: Allow SSH through firewall (prevent lockout)
+  ufw:
+    rule: allow
+    port: "{{ ufw_ssh_port }}"
+    proto: tcp
+  become: true
+  notify: reload ufw
+
+- name: Enable rate limiting on SSH
+  ufw:
+    rule: limit
+    port: "{{ ufw_ssh_port }}"
+    proto: tcp
+  become: true
+  notify: reload ufw
+  when: ufw_ssh_rate_limit | default(true)
+
+- name: Allow additional TCP ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  become: true
+  loop: "{{ ufw_allowed_tcp_ports | default([]) }}"
+  notify: reload ufw
+
+- name: Allow additional UDP ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+  become: true
+  loop: "{{ ufw_allowed_udp_ports | default([]) }}"
+  notify: reload ufw
+
+- name: Configure UFW logging
+  ufw:
+    logging: "{{ ufw_logging }}"
+  become: true
+  notify: reload ufw
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  become: true
+  when: enable_ufw | default(false)
+
+- name: Ensure UFW service is enabled and started
+  systemd:
+    name: ufw
+    enabled: yes
+    state: started
+  become: true
+  when: enable_ufw | default(false)

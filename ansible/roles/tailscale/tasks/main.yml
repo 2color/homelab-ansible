@@ -31,6 +31,14 @@
     state: started
   become: true
 
+- name: Allow Tailscale through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: "41641"
+    proto: udp
+  become: true
+  when: enable_ufw | default(false)
+
 - name: Check if Tailscale is already authenticated
   command: tailscale status --json
   register: tailscale_status
@@ -71,7 +79,7 @@
   when: vault_tailscale_auth_key is defined
   register: tailscale_config_result
   changed_when: true
-  notify: restart tailscale
+  # notify: restart tailscale
 
 - name: Display Tailscale status
   command: tailscale status

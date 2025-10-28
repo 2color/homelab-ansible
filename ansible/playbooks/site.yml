@@ -18,6 +18,8 @@
     - role: samba
       tags: samba
     - docker
+    - role: ufw
+      tags: ufw
     - cockpit
     - portainer
     - plex

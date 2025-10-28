@@ -1,0 +1,11 @@
+---
+- name: reload ufw
+  ufw:
+    state: reloaded
+  become: true
+
+- name: restart ufw
+  systemd:
+    name: ufw
+    state: restarted
+  become: true

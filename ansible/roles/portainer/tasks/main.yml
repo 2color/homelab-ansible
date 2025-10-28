@@ -23,4 +23,4 @@
     rule: allow
     port: "{{ portainer_port }}"
     proto: tcp
-  ignore_errors: yes
+  when: enable_ufw | default(false)
