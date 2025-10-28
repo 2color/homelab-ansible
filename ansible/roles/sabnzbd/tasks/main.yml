@@ -37,7 +37,7 @@
       TZ: "{{ timezone | default('UTC') }}"
     volumes:
       - /opt/docker-data/sabnzbd/config:/config
-      - /data:/downloads
+      - /data/media:/downloads
       - /opt/docker-data/sabnzbd/incomplete:/incomplete-downloads
     networks:
       - name: homelab-network
