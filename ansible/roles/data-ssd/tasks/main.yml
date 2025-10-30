@@ -49,6 +49,15 @@
     state: mounted
   become: true
 
+- name: Set ownership on mount point
+  file:
+    path: "{{ data_ssd_mount_point }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  become: true
+
 - name: Verify mount is successful
   command: df -h {{ data_ssd_mount_point }}
   register: mount_status

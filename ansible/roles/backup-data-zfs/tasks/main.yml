@@ -7,9 +7,9 @@
       - zfs_pool_devices is defined and zfs_pool_devices | length > 0
       - zfs_pool_devices | select('match', '^/dev/') | list | length == zfs_pool_devices | length
       - zfs_pool_type != 'mirror' or zfs_pool_devices | length >= 2
-      - zfs_datasets is defined and zfs_datasets | length > 0
-      - zfs_datasets | selectattr('name', 'undefined') | list | length == 0
-      - zfs_datasets | selectattr('mountpoint', 'undefined') | list | length == 0
+      - zfs_datasets is defined
+      - zfs_datasets | length == 0 or zfs_datasets | selectattr('name', 'undefined') | list | length == 0
+      - zfs_datasets | length == 0 or zfs_datasets | selectattr('mountpoint', 'undefined') | list | length == 0
     fail_msg: "Invalid ZFS configuration detected. Check pool name, type, devices, and datasets."
 
 - name: Install ZFS packages
@@ -37,6 +37,7 @@
 - name: Verify all devices exist and are block devices
   stat:
     path: "{{ item }}"
+    follow: true
   register: zfs_devices_stat
   failed_when: not zfs_devices_stat.stat.exists or not zfs_devices_stat.stat.isblk
   loop: "{{ zfs_pool_devices }}"
@@ -131,6 +132,15 @@
     day: "{{ zfs_scrub_cron_day }}"
   become: true
   when: zfs_enable_scrub
+
+- name: Set ownership on ZFS pool mountpoint
+  file:
+    path: "/backup-data"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  become: true
 
 - name: Display ZFS status
   command: zpool status {{ zfs_pool_name }}

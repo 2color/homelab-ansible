@@ -23,10 +23,9 @@ zfs_default_properties:
   recordsize: "128k"  # Good for mixed workloads
 
 # ZFS datasets configuration
-zfs_datasets:
-  - name: "{{ zfs_pool_name }}/root"
-    mountpoint: "/backup-data"
-    properties: {}  # Uses all defaults
+# Note: The pool root (backup-data) is automatically mounted at /backup-data
+# Additional datasets can be added here if needed for organization
+zfs_datasets: []
 
 # Maintenance settings
 zfs_enable_scrub: true
