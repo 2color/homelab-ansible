@@ -1,0 +1,9 @@
+---
+- name: Create restic backup storage directory
+  file:
+    path: /data/restic-backups
+    state: directory
+    owner: daniel
+    group: daniel
+    mode: '0700'
+  become: true

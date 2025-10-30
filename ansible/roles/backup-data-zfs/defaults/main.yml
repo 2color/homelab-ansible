@@ -1,11 +1,14 @@
 ---
 # ZFS pool configuration
-zfs_pool_name: "data"
-zfs_pool_device: "/dev/nvme0n1"
+zfs_pool_name: "backup-data"
+zfs_pool_type: "mirror"  # Type of ZFS vdev: mirror, raidz, raidz2, or single
+zfs_pool_devices:
+  - "/dev/disk/by-id/usb-TerraMas_TDAS_ZVY0CGK5-0:0"  # sda - TerraMaster disk 1
+  - "/dev/disk/by-id/usb-TerraMas_TDAS_ZVY0CGPW-0:0"  # sdb - TerraMaster disk 2
 
 # ZFS pool-level properties (applied at pool creation)
 zfs_pool_properties:
-  ashift: "12"  # 4K sectors for modern SSDs
+  ashift: "12"  # 4K physical sectors (modern HDDs and SSDs)
   autoexpand: "on"
   autoreplace: "off"
 
@@ -14,21 +17,16 @@ zfs_default_properties:
   compression: "lz4"
   atime: "off"
   checksum: "blake3"
-  primarycache: "all"  # Good for SSDs
-  secondarycache: "all"
-  sync: "standard"  # Better performance than always
-  recordsize: "128k"  # Good general purpose size for mixed workloads
+  primarycache: "all"  # ARC cache in RAM
+  secondarycache: "all"  # L2ARC cache (if available)
+  sync: "standard"
+  recordsize: "128k"  # Good for mixed workloads
 
 # ZFS datasets configuration
 zfs_datasets:
   - name: "{{ zfs_pool_name }}/root"
-    mountpoint: "/data"
+    mountpoint: "/backup-data"
     properties: {}  # Uses all defaults
-
-# Migration settings
-zfs_backup_original: true
-zfs_migration_temp_mount: "/mnt/zfs-temp"
-zfs_verify_migration: true
 
 # Maintenance settings
 zfs_enable_scrub: true

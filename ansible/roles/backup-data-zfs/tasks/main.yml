@@ -3,11 +3,14 @@
   assert:
     that:
       - zfs_pool_name is defined and zfs_pool_name | length > 0
-      - zfs_pool_device is defined and zfs_pool_device.startswith('/dev/')
+      - zfs_pool_type is defined and zfs_pool_type in ['mirror', 'raidz', 'raidz2', 'raidz3', 'single']
+      - zfs_pool_devices is defined and zfs_pool_devices | length > 0
+      - zfs_pool_devices | select('match', '^/dev/') | list | length == zfs_pool_devices | length
+      - zfs_pool_type != 'mirror' or zfs_pool_devices | length >= 2
       - zfs_datasets is defined and zfs_datasets | length > 0
       - zfs_datasets | selectattr('name', 'undefined') | list | length == 0
       - zfs_datasets | selectattr('mountpoint', 'undefined') | list | length == 0
-    fail_msg: "Invalid ZFS configuration detected"
+    fail_msg: "Invalid ZFS configuration detected. Check pool name, type, devices, and datasets."
 
 - name: Install ZFS packages
   apt:
@@ -29,26 +32,39 @@
   register: zfs_pool_exists
   failed_when: false
   changed_when: false
+  become: true
 
-- name: Verify target device exists and is block device
+- name: Verify all devices exist and are block devices
   stat:
-    path: "{{ zfs_pool_device }}"
-  register: zfs_device_stat
-  failed_when: not zfs_device_stat.stat.exists or not zfs_device_stat.stat.isblk
+    path: "{{ item }}"
+  register: zfs_devices_stat
+  failed_when: not zfs_devices_stat.stat.exists or not zfs_devices_stat.stat.isblk
+  loop: "{{ zfs_pool_devices }}"
   when: zfs_pool_exists.rc != 0
 
-- name: Check device is not mounted or in use
-  shell: lsblk -n -o MOUNTPOINT {{ zfs_pool_device }} | grep -v '^$' || true
-  register: device_mounted
-  failed_when: device_mounted.stdout | trim | length > 0
+- name: Check devices are not mounted or in use
+  shell: lsblk -n -o MOUNTPOINT {{ item }} | grep -v '^$' || true
+  register: devices_mounted
+  failed_when: devices_mounted.stdout | trim | length > 0
+  loop: "{{ zfs_pool_devices }}"
+  when: zfs_pool_exists.rc != 0
+
+- name: Check devices are not part of any existing ZFS pool
+  shell: zpool status | grep -E "^\s+{{ item }}" || true
+  register: devices_in_pool
+  failed_when: devices_in_pool.stdout | trim | length > 0
+  loop: "{{ zfs_pool_devices }}"
+  become: true
   when: zfs_pool_exists.rc != 0
 
 - name: Create ZFS pool with optimized properties
   command: >
-    zpool create 
+    zpool create
     {% for key, value in zfs_pool_properties.items() %}-o {{ key }}={{ value }} {% endfor %}
     {% for key, value in zfs_default_properties.items() %}-O {{ key }}={{ value }} {% endfor %}
-    {{ zfs_pool_name }} {{ zfs_pool_device }}
+    {{ zfs_pool_name }}
+    {% if zfs_pool_type != 'single' %}{{ zfs_pool_type }}{% endif %}
+    {{ zfs_pool_devices | join(' ') }}
   become: true
   when: zfs_pool_exists.rc != 0
 

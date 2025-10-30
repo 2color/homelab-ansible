@@ -12,28 +12,22 @@
         name: homelab-1
   
   roles:
-    - geerlingguy.docker
-    - role: data-ssd
-      tags: data-ssd
-    - role: samba
-      tags: samba
-    - docker
-    - role: ufw
-      tags: ufw
-    - cockpit
-    - portainer
-    - plex
-    - role: sabnzbd
-      tags: sabnzbd
-    - role: jellyfin
-      tags: jellyfin
-    - ytdl-sub
-    - role: homelab-dashboard
-      tags: dashboard
-    - role: synology-nas
-      tags: nas
-
-    - { role: tailscale, tags: tailscale }
+    - {"role": "geerlingguy.docker"}
+    - {"role": "backup-data-zfs", "tags": "backup-data-zfs"}
+    - {"role": "data-ssd", "tags": "data-ssd"}
+    - {"role": "backup-storage", "tags": "backup-storage"}
+    - {"role": "samba", "tags": "samba"}
+    - {"role": "docker"}
+    - {"role": "ufw", "tags": "ufw"}
+    - {"role": "cockpit"}
+    - {"role": "portainer"}
+    - {"role": "plex"}
+    - {"role": "sabnzbd", "tags": "sabnzbd"}
+    - {"role": "jellyfin", "tags": "jellyfin"}
+    - {"role": "ytdl-sub"}
+    - {"role": "homelab-dashboard", "tags": "dashboard"}
+    - {"role": "synology-nas", "tags": "nas"}
+    - {"role": "tailscale", "tags": "tailscale"}
 
   post_tasks:
     - name: Display service URLs

@@ -57,3 +57,5 @@ interop/*-image.json
 tmp/
 temp/
 .tmp/
+
+.ansible-vault-password
