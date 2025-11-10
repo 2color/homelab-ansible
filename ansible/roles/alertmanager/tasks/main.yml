@@ -1,0 +1,51 @@
+---
+- name: Create Alertmanager config directory
+  file:
+    path: /opt/docker-data/alertmanager/config
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create Alertmanager data directory
+  file:
+    path: /opt/docker-data/alertmanager/data
+    state: directory
+    owner: "65534"  # nobody user for Alertmanager container
+    group: "65534"
+    mode: '0755'
+
+- name: Deploy Alertmanager configuration
+  template:
+    src: alertmanager.yml.j2
+    dest: /opt/docker-data/alertmanager/config/alertmanager.yml
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0644'
+  notify: restart alertmanager
+
+- name: Deploy Alertmanager container
+  docker_container:
+    name: alertmanager
+    image: "prom/alertmanager:{{ alertmanager_version }}"
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ alertmanager_port }}:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://{{ ansible_hostname }}:{{ alertmanager_port }}'
+    volumes:
+      - /opt/docker-data/alertmanager/config:/etc/alertmanager
+      - /opt/docker-data/alertmanager/data:/alertmanager
+    networks:
+      - name: homelab-network
+    user: "65534:65534"
+
+- name: Allow Alertmanager through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: "{{ alertmanager_port }}"
+    proto: tcp
+  when: enable_ufw | default(false)

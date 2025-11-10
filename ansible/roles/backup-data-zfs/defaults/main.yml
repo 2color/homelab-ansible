@@ -13,6 +13,120 @@ zfs_pool_properties:
   autoreplace: "off"
 
 # Default ZFS filesystem properties (inherited by all datasets)
+# zfs_default_properties:
+#   This set of ZFS dataset properties is intended to be applied to newly
+#   created datasets by the role. Each property below documents the purpose,
+#   common values, operational impact, and notes about changing the setting.
+#
+# compression:
+#   Purpose: Enable on-the-fly compression of file data written to the dataset.
+#   Typical values: "lz4" (recommended), "gzip-N", "zstd", "off".
+#   Impact: Reduces on-disk usage and read I/O by storing compressed blocks;
+#           compress/decompress CPU overhead is usually low for lz4 and is
+#           outweighed by I/O savings for most workloads. Heavier algorithms
+#           (gzip/zstd at high levels) trade CPU for higher compression.
+#   Notes:
+#     - Compression only affects new writes; existing data is unchanged.
+#     - lz4 is a sensible default for general-purpose filesystems.
+#     - Test workloads with representative data to choose the best algorithm.
+#
+# atime:
+#   Purpose: Controls whether file access times (atime) are updated on reads.
+#   Typical values: "on", "off".
+#   Impact: When "on", every read can generate metadata writes to update the
+#           access time, increasing write amplification and lowering read
+#           performance. When "off", applications that rely on atime (e.g.,
+#           some backup or mail software) may not behave as expected.
+#   Notes:
+#     - Setting "off" is common for general-purpose or performance-sensitive
+#       systems where atime is not required.
+#     - Changing atime affects future metadata updates only.
+#
+# checksum:
+#   Purpose: The checksum algorithm used to verify data integrity for blocks.
+#   Typical values: "blake3", "sha256", "sha512", "on" (legacy), "off" (not
+#                   recommended).
+#   Impact: Stronger checksums reduce the likelihood of undetected data
+#           corruption at the cost of additional CPU when checksums are
+#           computed or verified. Checksums are stored per-block and used by
+#           ZFS to detect and (if redundancy is available) repair corruption.
+#   Notes:
+#     - Support for algorithms like "blake3" depends on the ZFS implementation
+#       and kernel module version; verify compatibility with your platform.
+#     - Changing the checksum property does not retroactively re-hash existing
+#       data; it applies only to newly written blocks.
+#
+# primarycache:
+#   Purpose: Controls what is kept in the ARC (in-memory cache): metadata,
+#            data, or both.
+#   Typical values: "all" (default), "metadata", "none".
+#   Impact:
+#     - "all": both metadata and file data are cached in RAM (best for general
+#       performance).
+#     - "metadata": only metadata is cached in ARC; useful when dataset holds
+#       large cold data where caching full file contents wastes RAM.
+#     - "none": prevents use of ARC for this dataset (rarely used).
+#   Notes:
+#     - ARC is a global resource; tune per-dataset settings carefully on
+#       multi-workload systems.
+#
+# secondarycache:
+#   Purpose: Controls what is cached in the L2ARC (secondary cache devices such
+#            as NVMe/SSD): metadata, data, or both.
+#   Typical values: "all" (default), "metadata", "none".
+#   Impact:
+#     - L2ARC is read-only cache backed by fast devices; caching data there can
+#       improve read performance for hot data sets that don't fit in ARC.
+#     - Caching data in L2ARC consumes device space and can increase write
+#       activity to the cache device (warm-up traffic).
+#   Notes:
+#     - For workloads dominated by metadata lookups (e.g., many small files),
+#       "metadata" can be a better choice. If you have no L2 devices, this
+#       property has no effect.
+#
+# sync:
+#   Purpose: Controls ZFS handling of synchronous writes (fsync, O_SYNC).
+#   Typical values: "standard" (default), "always", "disabled".
+#   Impact:
+#     - "standard": honors dataset and pool settings; synchronous requests are
+#       handled in the default, safe manner.
+#     - "always": treat every write as synchronous, flushing to stable storage
+#       immediately — increases durability but can substantially reduce
+#       write throughput.
+#     - "disabled": best performance, but synchronous write semantics are
+#       ignored; this can risk data loss after crashes and is generally unsafe
+#       for databases or applications that rely on fsync.
+#   Notes:
+#     - Use "always" for extreme durability needs (with appropriate SLOG device
+#       where available) and "disabled" only when you accept the risk.
+#
+# recordsize:
+#   Purpose: Sets the preferred maximum logical blocksize (record size) for
+#            files in the dataset. This controls how data is aggregated and
+#            how checksums/replication operate.
+#   Typical values: "128k" (common default for mixed workloads), "1M",
+#                   "64k", "8k" (for DB workloads).
+#   Impact:
+#     - Larger recordsize benefits sequential I/O and large file throughput
+#       (fewer metadata objects, better compression and deduplication ratios).
+#     - Smaller recordsize benefits random I/O and small-block workloads
+#       (databases, VM images) by reducing read-modify-write overhead.
+#   Notes:
+#     - recordsize takes effect only for new writes; existing data keeps its
+#       original blocksize. Choose per-dataset values according to the primary
+#       workload that will live on the dataset.
+#
+# General operational notes:
+#   - These properties are applied per-dataset. When designing storage layouts,
+#     prefer creating separate datasets with tailored properties for different
+#     workload types (e.g., databases, backups, media).
+#   - Many properties only affect new writes; converting existing data to new
+#     settings typically requires rewriting data (send/receive, zfs
+#     clone/transfer, or explicit copy).
+#   - Verify the ZFS implementation and version on your systems for support of
+#     advanced features (e.g., blake3 checksum, LZ4/zstd options).
+#   - Use zfs set and zfs get for manual testing, and validate the role's
+#     behavior in a staging environment before applying to production.
 zfs_default_properties:
   compression: "lz4"
   atime: "off"

@@ -1,0 +1,6 @@
+---
+- name: restart dashboard
+  docker_container:
+    name: homelab-dashboard
+    state: started
+    restart: yes

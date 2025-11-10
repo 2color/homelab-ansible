@@ -14,6 +14,7 @@
     owner: "{{ ansible_user }}"
     group: docker
     mode: '0644'
+  notify: restart dashboard
 
 - name: Deploy Caddy container for dashboard
   docker_container:

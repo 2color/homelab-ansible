@@ -1,0 +1,6 @@
+---
+- name: restart alertmanager
+  docker_container:
+    name: alertmanager
+    state: started
+    restart: yes

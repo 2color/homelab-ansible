@@ -49,3 +49,21 @@ samba_shares:
     write_list: "{{ samba_username }}"
     # Make share publicly readable but only configured user can write
     public: yes
+
+  - name: backup-data
+    path: /backup-data
+    comment: "ZFS Backup Storage"
+    # Allow share to appear in network browse lists
+    browseable: yes
+    # Allow guest/anonymous read access
+    guest_ok: no
+    # Default to read-only for all users including guests
+    read_only: yes
+    # File creation permissions for new files
+    create_mask: "0644"
+    # Directory creation permissions for new directories
+    directory_mask: "0755"
+    # Allow configured user to write to the share
+    write_list: "{{ samba_username }}"
+    # Make share publicly readable but only configured user can write
+    public: yes

@@ -1,0 +1,27 @@
+---
+alertmanager_port: 9093
+alertmanager_version: latest
+
+# Notification settings (customize these in group_vars or inventory)
+
+# Slack notifications (optional)
+alertmanager_slack_webhook: ""
+alertmanager_slack_channel: "#alerts"
+
+# Email notifications
+# For Gmail, use the following settings:
+#   1. Enable 2-factor authentication on your Google account
+#   2. Generate an App Password at https://myaccount.google.com/apppasswords
+#   3. Set the following variables (in vault.yml for security):
+#      alertmanager_email_from: "your-email@gmail.com"
+#      alertmanager_email_to: "recipient@example.com"
+#      alertmanager_smtp_smarthost: "smtp.gmail.com:587"
+#      alertmanager_smtp_auth_username: "your-email@gmail.com"
+#      alertmanager_smtp_auth_password: "your-app-password"
+#      alertmanager_smtp_require_tls: true
+alertmanager_email_from: "alertmanager@homelab.local"
+alertmanager_email_to: ""
+alertmanager_smtp_smarthost: "localhost:25"
+alertmanager_smtp_auth_username: ""
+alertmanager_smtp_auth_password: ""
+alertmanager_smtp_require_tls: false

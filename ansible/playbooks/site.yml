@@ -25,6 +25,10 @@
     - {"role": "sabnzbd", "tags": "sabnzbd"}
     - {"role": "jellyfin", "tags": "jellyfin"}
     - {"role": "ytdl-sub"}
+    - {"role": "node-exporter", "tags": "monitoring"}
+    - {"role": "cadvisor", "tags": "monitoring"}
+    - {"role": "prometheus", "tags": "monitoring"}
+    - {"role": "alertmanager", "tags": "monitoring"}
     - {"role": "homelab-dashboard", "tags": "dashboard"}
     - {"role": "synology-nas", "tags": "nas"}
     - {"role": "tailscale", "tags": "tailscale"}
@@ -41,5 +45,8 @@
           - Plex: http://{{ ansible_host }}:32400/web
           - Jellyfin: http://{{ ansible_host }}:8096
           - ytdl-sub: http://{{ ansible_host }}:8443
+          - Prometheus: http://{{ ansible_host }}:9091
+          - Alertmanager: http://{{ ansible_host }}:9093
+          - cAdvisor: http://{{ ansible_host }}:8081
           - Samba share: \\{{ ansible_host }}\docker-data
           - NAS mounts: Check /mnt/nas/ for mounted Synology shares

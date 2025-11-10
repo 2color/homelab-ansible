@@ -1,0 +1,74 @@
+global:
+  resolve_timeout: 5m
+{% if alertmanager_smtp_smarthost != "localhost:25" %}
+  smtp_smarthost: '{{ alertmanager_smtp_smarthost }}'
+  smtp_from: '{{ alertmanager_email_from }}'
+{% if alertmanager_smtp_auth_username != "" %}
+  smtp_auth_username: '{{ alertmanager_smtp_auth_username }}'
+  smtp_auth_password: '{{ alertmanager_smtp_auth_password }}'
+{% endif %}
+{% if alertmanager_smtp_require_tls %}
+  smtp_require_tls: true
+{% endif %}
+{% endif %}
+
+# The root route with all parameters, which are inherited by the child routes
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical'
+      continue: true
+    - match:
+        severity: warning
+      receiver: 'warning'
+
+receivers:
+  - name: 'default'
+    # Default receiver catches all alerts
+{% if alertmanager_email_to != "" %}
+    email_configs:
+      - to: '{{ alertmanager_email_to }}'
+        headers:
+          Subject: '[Homelab] Alert: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+{% endif %}
+
+  - name: 'critical'
+{% if alertmanager_email_to != "" %}
+    email_configs:
+      - to: '{{ alertmanager_email_to }}'
+        headers:
+          Subject: '[CRITICAL] Homelab Alert: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+{% endif %}
+{% if alertmanager_slack_webhook != "" %}
+    slack_configs:
+      - api_url: '{{ alertmanager_slack_webhook }}'
+        channel: '{{ alertmanager_slack_channel }}'
+        title: 'CRITICAL: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+        text: >-
+          {{ "{{" }} range .Alerts {{ "}}" }}
+            *Alert:* {{ "{{" }} .Annotations.summary {{ "}}" }}
+            *Description:* {{ "{{" }} .Annotations.description {{ "}}" }}
+            *Severity:* {{ "{{" }} .Labels.severity {{ "}}" }}
+          {{ "{{" }} end {{ "}}" }}
+{% endif %}
+
+  - name: 'warning'
+{% if alertmanager_email_to != "" %}
+    email_configs:
+      - to: '{{ alertmanager_email_to }}'
+        headers:
+          Subject: '[WARNING] Homelab Alert: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+{% endif %}
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']

@@ -117,6 +117,24 @@
                 <div class="service-description">YouTube downloader with subscription management</div>
                 <div class="service-port">:{{ ytdl_sub_port }}</div>
             </a>
+
+            <a href="http://{{ ansible_hostname }}:{{ prometheus_port }}" class="service-card" target="_blank">
+                <div class="service-name">Prometheus</div>
+                <div class="service-description">Metrics collection and monitoring system</div>
+                <div class="service-port">:{{ prometheus_port }}</div>
+            </a>
+
+            <a href="http://{{ ansible_hostname }}:{{ alertmanager_port }}" class="service-card" target="_blank">
+                <div class="service-name">Alertmanager</div>
+                <div class="service-description">Alert routing and notification management</div>
+                <div class="service-port">:{{ alertmanager_port }}</div>
+            </a>
+
+            <a href="http://{{ ansible_hostname }}:{{ cadvisor_port }}" class="service-card" target="_blank">
+                <div class="service-name">cAdvisor</div>
+                <div class="service-description">Container resource usage and performance analysis</div>
+                <div class="service-port">:{{ cadvisor_port }}</div>
+            </a>
         </div>
     </div>
 </body>

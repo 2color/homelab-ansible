@@ -1,0 +1,64 @@
+---
+- name: Create Prometheus config directory
+  file:
+    path: /opt/docker-data/prometheus/config
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create Prometheus data directory
+  file:
+    path: /opt/docker-data/prometheus/data
+    state: directory
+    owner: "65534"  # nobody user for Prometheus container
+    group: "65534"
+    mode: '0755'
+
+- name: Deploy Prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: /opt/docker-data/prometheus/config/prometheus.yml
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Deploy Prometheus rules
+  template:
+    src: alerts.yml.j2
+    dest: /opt/docker-data/prometheus/config/alerts.yml
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Deploy Prometheus container
+  docker_container:
+    name: prometheus
+    image: "prom/prometheus:{{ prometheus_version }}"
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ prometheus_port }}:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - /opt/docker-data/prometheus/config:/etc/prometheus
+      - /opt/docker-data/prometheus/data:/prometheus
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - name: homelab-network
+    user: "65534:65534"
+
+- name: Allow Prometheus through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: "{{ prometheus_port }}"
+    proto: tcp
+  when: enable_ufw | default(false)
