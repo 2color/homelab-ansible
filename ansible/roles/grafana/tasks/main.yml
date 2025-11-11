@@ -1,0 +1,84 @@
+---
+- name: Create Grafana config directory
+  file:
+    path: /opt/docker-data/grafana/config
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+
+- name: Create Grafana data directory
+  file:
+    path: /opt/docker-data/grafana/data
+    state: directory
+    owner: "472"  # grafana user in container
+    group: "472"
+    mode: '0755'
+
+- name: Create Grafana provisioning directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0755'
+  loop:
+    - /opt/docker-data/grafana/config/provisioning
+    - /opt/docker-data/grafana/config/provisioning/datasources
+    - /opt/docker-data/grafana/config/provisioning/dashboards
+    - /opt/docker-data/grafana/config/provisioning/dashboards/dashboards
+
+- name: Deploy Grafana datasource configuration (Prometheus)
+  template:
+    src: datasource-prometheus.yml.j2
+    dest: /opt/docker-data/grafana/config/provisioning/datasources/prometheus.yml
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0644'
+  notify: restart grafana
+
+- name: Deploy Grafana dashboard provider configuration
+  template:
+    src: dashboard-provider.yml.j2
+    dest: /opt/docker-data/grafana/config/provisioning/dashboards/default.yml
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0644'
+  notify: restart grafana
+
+- name: Copy Grafana dashboard JSONs from files
+  copy:
+    src: "{{ item }}"
+    dest: "/opt/docker-data/grafana/config/provisioning/dashboards/dashboards/{{ item | basename }}"
+    owner: "{{ ansible_user }}"
+    group: docker
+    mode: '0644'
+  with_fileglob:
+    - "dashboards/*.json"
+
+- name: Deploy Grafana container
+  docker_container:
+    name: grafana
+    image: "grafana/grafana-oss:{{ grafana_version }}"
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ grafana_port }}:3000"
+    volumes:
+      - /opt/docker-data/grafana/config/provisioning:/etc/grafana/provisioning:ro
+      - /opt/docker-data/grafana/data:/var/lib/grafana
+    networks:
+      - name: homelab-network
+    env:
+      GF_SERVER_ROOT_URL: "http://{{ ansible_hostname }}:{{ grafana_port }}"
+      GF_AUTH_ANONYMOUS_ENABLED: "{{ grafana_anonymous_enabled | string | lower }}"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "{{ grafana_anonymous_role }}"
+      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+    user: "472:472"
+
+- name: Allow Grafana through firewall (if ufw is enabled)
+  ufw:
+    rule: allow
+    port: "{{ grafana_port }}"
+    proto: tcp
+  when: enable_ufw | default(false)

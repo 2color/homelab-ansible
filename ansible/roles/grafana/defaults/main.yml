@@ -1,0 +1,10 @@
+---
+grafana_port: 3000
+grafana_version: latest
+
+# Authentication settings
+grafana_anonymous_enabled: true
+grafana_anonymous_role: "Viewer"
+
+# Admin password (override in vault.yml)
+grafana_admin_password: "{{ vault_grafana_admin_password | default('admin') }}"

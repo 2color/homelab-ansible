@@ -135,6 +135,12 @@
                 <div class="service-description">Container resource usage and performance analysis</div>
                 <div class="service-port">:{{ cadvisor_port }}</div>
             </a>
+
+            <a href="http://{{ ansible_hostname }}:{{ grafana_port }}" class="service-card" target="_blank">
+                <div class="service-name">Grafana</div>
+                <div class="service-description">Metrics visualization and analytics platform</div>
+                <div class="service-port">:{{ grafana_port }}</div>
+            </a>
         </div>
     </div>
 </body>
