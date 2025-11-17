@@ -1,6 +1,6 @@
 ---
 # Data SSD configuration
-data_ssd_device: "/dev/nvme1n1"
+# data_ssd_device: REQUIRED - Must be set in inventory (e.g., "/dev/nvme1n1")
 data_ssd_mount_point: "/data"
 data_ssd_filesystem: "ext4"
 

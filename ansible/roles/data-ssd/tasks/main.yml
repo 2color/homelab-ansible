@@ -2,10 +2,12 @@
 - name: Validate data SSD configuration
   assert:
     that:
-      - data_ssd_device is defined and data_ssd_device.startswith('/dev/')
+      - data_ssd_device is defined
+      - data_ssd_device | length > 0
+      - data_ssd_device.startswith('/dev/')
       - data_ssd_mount_point is defined and data_ssd_mount_point.startswith('/')
       - data_ssd_filesystem is defined
-    fail_msg: "Invalid data SSD configuration detected"
+    fail_msg: "Invalid data SSD configuration. data_ssd_device is required and must be set in inventory (e.g., data_ssd_device: '/dev/nvme1n1')"
 
 - name: Verify target device exists and is block device
   stat:
