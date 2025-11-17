@@ -15,7 +15,7 @@
     - {"role": "geerlingguy.docker"}
     - {"role": "backup-data-zfs", "tags": ["backup-data-zfs", "zfs"]}
     - {"role": "data-ssd", "tags": "data-ssd"}
-    - {"role": "backup-storage", "tags": "backup-storage"}
+    - {"role": "backup-directory", "tags": "backup-directory"}
     - {"role": "samba", "tags": "samba"}
     - {"role": "docker"}
     - {"role": "ufw", "tags": "ufw"}

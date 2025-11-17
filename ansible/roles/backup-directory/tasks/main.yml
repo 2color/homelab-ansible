@@ -1,7 +1,7 @@
 ---
 - name: Create restic backup storage directory
   file:
-    path: /data/restic-backups
+    path: /backup-data/restic-backups
     state: directory
     owner: daniel
     group: daniel
