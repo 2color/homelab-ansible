@@ -1,6 +1,6 @@
 # HP EliteDesk 800 G4 Mini Homelab Knowledge Base
 
-## Setup guide
+## Initial Setup
 
 1. Reset vPro/AMT to factory defaults
 
@@ -25,7 +25,7 @@
 4. Use a USB drive to install Ubuntu Server
 
 - Download the `ubuntu-24.04.2-live-server-amd64.iso` from the official site
-- Create a bootable USB drive on Mac with etcher https://etcher.balena.io/
+- Create a bootable USB drive on Mac with [etcher](https://etcher.balena.io/)
 - Boot the EliteDesk from the USB drive and install Ubuntu Server
 - Follow the prompts to set up the server, including network configuration and user accounts.
 - Do not enable lvm for simplicity
@@ -427,16 +427,74 @@ Still undecided on the backup strategy, but considering the following options:
 - https://forum.duplicati.com/t/big-comparison-borg-vs-restic-vs-arq-5-vs-duplicacy-vs-duplicati/9952?u=tophee
 - https://forum.duplicacy.com/t/comparison-duplicacy-borg-restic-arq-duplicati/4210/12
 
-### ZFS Features that might be useful
+### ZFS Backup Storage Implementation
 
-It may be nice to try ZFS for the second SSD drive in the HP EliteDesk. Seems a little complex for the boot drive, but could be useful for data storage.
+The homelab uses ZFS for the backup storage system with a Terramaster D4-320 USB 3.2 DAS (Direct Attached Storage) enclosure containing two disks configured in a mirror configuration.
 
-**RAID Support:** ZRAID configurations
-**Advanced Features:** Snapshots, compression, deduplication
-**Integration:** Available through Proxmox
-**Benefits:** Data integrity, flexible storage management
+#### Hardware Setup
 
-Conclusion: Not worth it for a single SSD. But could be useful for a RAID setup.
+- **DAS Enclosure:** Terramaster D4-320 USB 3.2
+- **Connection:** USB 3.2 connection to HP EliteDesk
+- **Disks:** Two drives in ZFS mirror configuration
+- **Disk Identification:**
+  - Disk 1: `/dev/disk/by-id/usb-TerraMas_TDAS_ZVY0CGK5-0:0` (sda)
+  - Disk 2: `/dev/disk/by-id/usb-TerraMas_TDAS_ZVY0CGPW-0:0` (sdb)
+
+#### ZFS Pool Configuration
+
+**Pool Name:** `backup-data`
+**Pool Type:** Mirror (provides redundancy - can survive one disk failure)
+**Mount Point:** `/backup-data`
+
+**Pool-Level Properties:**
+- `ashift=12`: Optimized for 4K physical sectors (modern HDDs/SSDs)
+- `autoexpand=on`: Automatically expand pool when larger disks are installed
+- `autoreplace=off`: Manual control over disk replacement
+
+#### ZFS Dataset Properties
+
+The pool uses optimized filesystem properties for backup workloads:
+
+- **compression: lz4** - Fast compression reduces storage usage with minimal CPU overhead
+- **atime: off** - Disabled access time updates to reduce write amplification
+- **checksum: blake3** - Modern, fast checksum algorithm for data integrity verification
+- **primarycache: all** - Cache both metadata and data in ARC (RAM)
+- **secondarycache: all** - Use L2ARC if available for extended caching
+- **sync: standard** - Standard synchronous write handling
+- **recordsize: 128k** - Balanced block size for mixed backup workloads
+
+#### Automated Maintenance
+
+**Monthly ZFS Scrub:**
+- Scheduled: First day of each month at 2:00 AM
+- Purpose: Verify data integrity and detect silent data corruption
+- Command: `zpool scrub backup-data`
+
+**Automatic Import:**
+- Systemd service (`zfs-import.service`) ensures the pool is automatically imported at boot
+- Runs after `systemd-udev-settle.service` to ensure USB devices are available
+
+**Hot-Plug Support (Optional):**
+- Enable with `zfs_enable_hotplug: true` in role configuration
+- When enabled, udev rules automatically import the pool when USB devices are detected
+- Works for both boot-time and runtime device connection
+- Useful when the USB DAS may connect after the server has booted
+
+#### Benefits of ZFS for Backups
+
+- **Data Integrity:** Blake3 checksums detect silent data corruption
+- **Compression:** LZ4 compression reduces storage requirements automatically
+- **Redundancy:** Mirror configuration survives single disk failure
+- **Snapshots:** Fast, space-efficient snapshots for point-in-time recovery
+- **Self-Healing:** Automatically repairs corrupted data using mirror copy
+- **Easy Expansion:** Add drives or replace with larger ones seamlessly
+
+#### Design Decisions
+
+- **Mirror vs RAIDZ:** Chose mirror for better random I/O performance and simpler disk replacement
+- **USB Connection:** Acceptable for backup workloads; provides flexibility for future expansion
+- **Blake3 Checksum:** Modern algorithm offers better performance than SHA256 while maintaining strong data integrity
+- **LZ4 Compression:** Provides good compression ratios with negligible CPU overhead, ideal for backup data
 
 ## References
 
@@ -452,19 +510,11 @@ Conclusion: Not worth it for a single SSD. But could be useful for a RAID setup.
 
 ### Inspiration
 
-- https://perfectmediaserver.com/04
+- https://perfectmediaserver.com/
 
 #### Adding More Drives to the EliteDesk
-
 
 - [Terramaster D4-320 USB 3.2 DAS Review](https://www.youtube.com/watch?v=ZdEqEWiA2CE)
 - [hp_elitedesk_800_g4_mini_the_ultimate_4drive_setup/](https://www.reddit.com/r/homelab/comments/1e913vb/hp_elitedesk_800_g4_mini_the_ultimate_4drive_setup/)
 - 3D print an enclosure for the EliteDesk: https://makerworld.com/en/models/1399535-thinknas-4x-hdd-nas-enclosure-for-lenovo-m920q#profileId-1589394
 - https://www.reddit.com/r/homelab/comments/1hnniwe/stuffing_4x_ssds_in_a_hp_elitedesk_800_g4_micro/
-
-
-## Next Steps
-
-
-- [] Add an external DAS with HDDs for long term storage (e.g., Terramaster D4-320)
-- [] Setup automated backups (restic/borg)
