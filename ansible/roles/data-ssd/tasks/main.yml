@@ -40,10 +40,16 @@
     mode: '0755'
   become: true
 
-- name: Mount the SSD filesystem
+- name: Get UUID of the SSD device
+  command: blkid -s UUID -o value {{ data_ssd_device }}
+  register: ssd_uuid
+  changed_when: false
+  become: true
+
+- name: Mount the SSD filesystem using UUID
   mount:
     path: "{{ data_ssd_mount_point }}"
-    src: "{{ data_ssd_device }}"
+    src: "UUID={{ ssd_uuid.stdout }}"
     fstype: "{{ data_ssd_filesystem }}"
     opts: "{{ data_ssd_mount_options | join(',') }}"
     state: mounted
