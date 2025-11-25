@@ -35,14 +35,6 @@
 
 The homelab runs the following services managed by Ansible:
 
-### Recent Updates
-
-- **Jellyfin Added**: Added Jellyfin as a second media server alongside Plex
-  - Uses same media volumes as Plex for seamless content access
-  - Hardware transcoding enabled with `/dev/dri` device mapping
-  - Integrated into homelab dashboard and deployment pipeline
-  - UPnP/DLNA discovery on port 1900/udp (reassigned from Plex to avoid conflicts)
-
 ### Core Infrastructure
 
 - **Docker**: Container runtime (geerlingguy.docker role)
@@ -474,11 +466,6 @@ The pool uses optimized filesystem properties for backup workloads:
 - Systemd service (`zfs-import.service`) ensures the pool is automatically imported at boot
 - Runs after `systemd-udev-settle.service` to ensure USB devices are available
 
-**Hot-Plug Support (Optional):**
-- Enable with `zfs_enable_hotplug: true` in role configuration
-- When enabled, udev rules automatically import the pool when USB devices are detected
-- Works for both boot-time and runtime device connection
-- Useful when the USB DAS may connect after the server has booted
 
 #### Benefits of ZFS for Backups
 
