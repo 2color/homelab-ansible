@@ -48,12 +48,15 @@
 - name: Parse Tailscale status
   set_fact:
     tailscale_authenticated: "{{ (tailscale_status.stdout | from_json).BackendState == 'Running' }}"
-  when: tailscale_status.rc == 0
+  when:
+    - tailscale_status.rc == 0
+    - tailscale_status.stdout | length > 0
+  ignore_errors: true
 
-- name: Set authentication status to false if command failed
+- name: Set authentication status to false if parsing failed
   set_fact:
     tailscale_authenticated: false
-  when: tailscale_status.rc != 0
+  when: tailscale_authenticated is not defined
 
 
 - name: Debug vault variable
