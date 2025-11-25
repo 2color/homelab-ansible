@@ -2,6 +2,32 @@
 
 Ansible playbooks to configure your HP EliteDesk 800 G4 Mini as a homelab server with Docker, Cockpit, Portainer, SABnzbd, and Plex.
 
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Running Specific Roles](#running-specific-roles)
+  - [Single Role](#single-role)
+  - [Multiple Roles](#multiple-roles)
+  - [Skip Specific Roles](#skip-specific-roles)
+- [Services Installed](#services-installed)
+- [Directory Structure](#directory-structure)
+- [Configuration](#configuration)
+  - [Port Customization](#port-customization)
+  - [Plex Setup](#plex-setup)
+  - [SABnzbd Categories](#sabnzbd-categories)
+  - [Hardware Transcoding](#hardware-transcoding)
+- [Ansible Vault](#ansible-vault)
+  - [Creating a Vault File](#creating-a-vault-file)
+  - [Editing an Existing Vault](#editing-an-existing-vault)
+  - [Viewing Vault Contents](#viewing-vault-contents)
+  - [Setting Up Vault Password File](#setting-up-vault-password-file)
+  - [Running Playbooks with Vault](#running-playbooks-with-vault)
+  - [Changing Vault Password](#changing-vault-password)
+  - [Common Vault Variables](#common-vault-variables)
+- [Troubleshooting](#troubleshooting)
+  - [Check container status](#check-container-status)
+  - [View logs](#view-logs)
+  - [Restart services](#restart-services)
+
 ## Prerequisites
 
 - Ubuntu Server 24.04 installed on HP EliteDesk
@@ -151,7 +177,17 @@ Ansible Vault is used to encrypt sensitive data like API keys, passwords, and to
 
 ### Creating a Vault File
 
-If you need to create a new vault file:
+A template is provided at `inventories/homelab/group_vars/vault.example.yml` showing all required vault variables. To create your vault file:
+
+```bash
+# Copy the example file
+cp inventories/homelab/group_vars/vault.example.yml inventories/homelab/group_vars/vault.yml
+
+# Encrypt it with your vault password
+ansible-vault encrypt inventories/homelab/group_vars/vault.yml
+```
+
+Or create a new vault file from scratch:
 
 ```bash
 ansible-vault create inventories/homelab/group_vars/vault.yml
@@ -162,11 +198,22 @@ This will:
 2. Open your default editor to add encrypted variables
 3. Save and encrypt the file when you exit
 
-Example vault content:
+#### Vault Variables Reference
+
+All variables in `vault.example.yml`:
+
 ```yaml
----
-tailscale_auth_key: "tskey-auth-XXXXXXXXXXXXXXXXXXXX"
-plex_claim_token: "claim-XXXXXXXXXXXXXXXXXXXX"
+vault_tailscale_auth_key:           # Tailscale auth key for mesh VPN setup
+vault_samba_password:               # Samba user password for file sharing
+vault_nas_username:                 # Synology NAS username for NFS mounts
+vault_nas_password:                 # Synology NAS password for authentication
+alertmanager_email_from:            # Email sender address for alerts
+alertmanager_email_to:              # Email recipient address for alerts
+alertmanager_smtp_smarthost:        # SMTP server and port (e.g., smtp.gmail.com:587)
+alertmanager_smtp_auth_username:    # SMTP authentication username
+alertmanager_smtp_auth_password:    # SMTP authentication password (use app password for Gmail)
+alertmanager_smtp_require_tls:      # Enable TLS for SMTP connection (true/false)
+grafana_admin_password:             # Grafana admin user password
 ```
 
 ### Editing an Existing Vault

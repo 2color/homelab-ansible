@@ -1,11 +1,11 @@
-vault_tailscale_auth_key: 
-vault_samba_password: 
-vault_nas_username: 
-vault_nas_password: 
-alertmanager_email_from: "user@gmail.com"
-alertmanager_email_to: "user@gmail.com"
-alertmanager_smtp_smarthost: "smtp.gmail.com:587"
-alertmanager_smtp_auth_username: "user@gmail.com"
-alertmanager_smtp_auth_password: "GOOGLE_APP_PASSWORD"
-alertmanager_smtp_require_tls: true
-grafana_admin_password: "GENERATE_PASSWORD"
+vault_tailscale_auth_key:           # Tailscale auth key for mesh VPN setup
+vault_samba_password:               # Samba user password for file sharing
+vault_nas_username:                 # Synology NAS username for NFS mounts
+vault_nas_password:                 # Synology NAS password for authentication
+alertmanager_email_from:            # Email sender address for alerts
+alertmanager_email_to:              # Email recipient address for alerts
+alertmanager_smtp_smarthost:        # SMTP server and port (e.g., smtp.gmail.com:587)
+alertmanager_smtp_auth_username:    # SMTP authentication username
+alertmanager_smtp_auth_password:    # SMTP authentication password (use app password for Gmail)
+alertmanager_smtp_require_tls:      # Enable TLS for SMTP connection (true/false)
+grafana_admin_password:             # Grafana admin user password

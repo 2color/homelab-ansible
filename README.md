@@ -2,6 +2,45 @@
 
 A complete homelab infrastructure setup using Ansible automation for an HP EliteDesk 800 G4 Mini server. This repository contains everything you need to deploy a Docker-based homelab with media services, monitoring, and remote access.
 
+- [What's Included](#whats-included)
+  - [Core Services](#core-services)
+  - [Infrastructure](#infrastructure)
+- [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Deployment](#deployment)
+- [Hardware Setup](#hardware-setup)
+  - [Recommended Hardware](#recommended-hardware)
+  - [Alternative Hardware](#alternative-hardware)
+- [Initial Hardware Setup](#initial-hardware-setup)
+  - [1. Configure vPro/AMT Remote Management](#1-configure-vproamt-remote-management)
+  - [2. Set Up MeshCommander](#2-set-up-meshcommander)
+  - [3. Install Ubuntu Server](#3-install-ubuntu-server)
+- [Current Services](#current-services)
+  - [Core Infrastructure](#core-infrastructure)
+  - [Media Services](#media-services)
+  - [Dashboard](#dashboard)
+- [Ansible Configuration](#ansible-configuration)
+  - [Remote Management Notes](#remote-management-notes)
+- [Remote Access](#remote-access)
+  - [Tailscale Mesh VPN](#tailscale-mesh-vpn)
+  - [Dynamic DNS (Alternative Approach)](#dynamic-dns-alternative-approach)
+- [Architecture \& Design](#architecture--design)
+  - [Design Philosophy](#design-philosophy)
+  - [Alternative Platforms](#alternative-platforms)
+- [Storage Architecture](#storage-architecture)
+  - [Interplay with Synology NAS](#interplay-with-synology-nas)
+  - [File Sharing for Mac Clients](#file-sharing-for-mac-clients)
+  - [Samba Configuration for macOS Compatibility](#samba-configuration-for-macos-compatibility)
+- [Backups](#backups)
+  - [Backup Storage](#backup-storage)
+  - [ZFS Backup Storage Implementation](#zfs-backup-storage-implementation)
+- [Additional Resources](#additional-resources)
+  - [Official Documentation](#official-documentation)
+  - [Community Discussions](#community-discussions)
+  - [Inspiration \& Guides](#inspiration--guides)
+  - [Storage Expansion Options](#storage-expansion-options)
+
+
 ## What's Included
 
 ### Core Services
