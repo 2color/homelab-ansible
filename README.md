@@ -1,4 +1,6 @@
-# HP EliteDesk 800 G4 Mini Homelab Knowledge Base
+# Homelab Knowledge Base and Ansible Playbooks
+
+This Ansible roles in this repo were written for the HP EliteDesk 800 G4 Mini with two NVMe M.2 SSDs and an external Terramaster D4-320.
 
 ## Initial Setup
 
@@ -61,24 +63,14 @@ The homelab runs the following services managed by Ansible:
   - Displays server hostname and IP address
   - Links to all configured services with descriptions
 
-### Service URLs
-
-- Dashboard: http://192.168.1.36
-- Cockpit: https://192.168.1.36:9090
-- Portainer: http://192.168.1.36:9000
-- SABnzbd: http://192.168.1.36:8080
-- Plex: http://192.168.1.36:32400/web
-- Jellyfin: http://192.168.1.36:8096
-- ytdl-sub: http://192.168.1.36:8443
-
 ## Ansible setup
 
-See other notes.
+See [Ansible README](./ansible/README.md)
 
 ### notes on AMT and MeshCommander
 
 - AMT (Active Management Technology) allows remote management of the system, including power control.
-- Remote desktop works pretty well, but it requires that a screen is connected  to the EliteDesk which is a bit annoying.
+- Remote desktop works pretty well, but it requires that a screen is connected to the EliteDesk which is a bit annoying.
 - You can still power on the system and access the BIOS remotely without a screen.
 - A DisplayPort emulator (dummy plug) to enable remote desktop via AMT without needing a physical monitor connected.
 
@@ -132,13 +124,11 @@ Alternative to Tailscale for remote access using traditional port forwarding:
 ### HP EliteDesk 800 G4 Mini
 
 **CPU:** Intel Core i5-8500
-
-- Alternative: i5-8500T (lower TDP variant)
-  **vPro Support:** Yes (AMT/IDER remote management)
-  **Form Factor:** Compact mini PC
-  **Memory:** 8GB default, expandable to 32GB or 64GB
-  **Storage:** 256GB M.2 SSD with dual M.2 NVMe slots
-  **Expandability:** Additional M.2 slot available for storage or Wi-Fi
+**vPro Support:** Yes (AMT/IDER remote management)
+**Form Factor:** Compact mini PC
+**Memory:** 16GB
+**Storage:** 256GB M.2 SSD + 1TB M.2 SSD
+**Expandability:** Additional smaller M.2 slot available for Wi-Fi
 
 ### Remote Management
 
