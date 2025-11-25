@@ -1,37 +1,130 @@
-# Homelab Knowledge Base and Ansible Playbooks
+# Homelab Setup Guide
 
-This Ansible roles in this repo were written for the HP EliteDesk 800 G4 Mini with two NVMe M.2 SSDs and an external Terramaster D4-320.
+A complete homelab infrastructure setup using Ansible automation for an HP EliteDesk 800 G4 Mini server. This repository contains everything you need to deploy a Docker-based homelab with media services, monitoring, and remote access.
 
-## Initial Setup
+## What's Included
 
-1. Reset vPro/AMT to factory defaults
+### Core Services
 
-- Folowed this guide https://www.youtube.com/watch?v=VcqZ7D9CNg0&t=182s
-- Enabled Intel Management Engine (ME) and AMT in BIOS
+- **Media Streaming**: Plex Media Server and Jellyfin
+- **Downloads**: SABnzbd (Usenet) and ytdl-sub (YouTube)
+- **Monitoring**: Prometheus, Grafana, and Alertmanager
+- **Management**: Portainer (containers), Cockpit (system)
+- **Remote Access**: Tailscale mesh VPN
+- **File Sharing**: Samba server with macOS optimization
+- **Storage**: ZFS backup pool with snapshots
+
+### Infrastructure
+
+- **Base OS**: Ubuntu Server 24.04
+- **Automation**: Ansible playbooks for configuration
+- **Containers**: Docker with hardware transcoding support
+- **Storage**: ZFS mirror on USB DAS, NVMe SSDs, Synology NAS integration
+- **Security**: UFW firewall, Tailscale VPN, secure credentials via Ansible Vault
+
+## Quick Start
+
+### Prerequisites
+
+- HP EliteDesk 800 G4 Mini (or similar hardware)
+- Ubuntu Server 24.04 installed
+- SSH access configured with key authentication
+- Local machine with Ansible installed
+
+### Deployment
+
+1. **Clone this repository**
+
+   ```bash
+   git clone <repository-url> homelab-ansible
+   cd homelab-ansible
+   ```
+
+2. **Configure inventory**
+
+   - Edit `ansible/inventories/homelab/hosts.yml` with your server IP
+   - Update variables in `ansible/inventories/homelab/group_vars/all.yml`
+
+3. **Set up secrets**
+
+   ```bash
+   cd ansible
+   ansible-vault create inventories/homelab/group_vars/vault.yml
+   # Add your secrets (see vault.example.yml)
+   ```
+
+4. **Deploy everything**
+
+   ```bash
+   cd ansible
+   ansible-playbook playbooks/site.yml --ask-vault-pass
+   ```
+
+5. **Access your services**
+   - Dashboard: `http://<server-ip>`
+   - Grafana: `http://<server-ip>:3000` (admin/admin)
+   - Portainer: `http://<server-ip>:9000`
+   - See full service list in the [Current Services](#current-services) section
+
+## Hardware Setup
+
+### Recommended Hardware
+
+**HP EliteDesk 800 G4 Mini**
+
+- **CPU**: Intel Core i5-8500 (with Quick Sync for transcoding)
+- **Memory**: 16GB RAM
+- **Storage**: 256GB M.2 SSD + 1TB M.2 SSD
+- **Remote Management**: Intel vPro/AMT support
+- **Form Factor**: Compact mini PC
+
+**Storage Expansion**
+
+- **Terramaster D4-320**: USB 3.2 DAS enclosure
+- **Configuration**: 2x drives in ZFS mirror for backups
+- **Optional**: Synology NAS for network storage
+
+### Alternative Hardware
+
+**Lenovo ThinkCentre Series**
+
+- M920q: Current generation, USB-C, efficient
+- M920x: Enhanced with discrete GPU options
+- M720q: Similar specs, older chipset
+
+**Budget Options**
+
+- Chinese mini PCs (Celeron N5095/C150Z)
+- Lower power consumption and cost
+- Suitable for basic streaming and Docker workloads
+
+## Initial Hardware Setup
+
+### 1. Configure vPro/AMT Remote Management
+
+Follow this [video guide](https://www.youtube.com/watch?v=VcqZ7D9CNg0&t=182s):
+
+- Enable Intel Management Engine (ME) and AMT in BIOS
 - Reset ME password by selecting "Unconfigure AMT on Next Boot"
-- Go to the Intel Management Engine BIOS Extension and update password from default `admin`
-- Leave DHCP and reserve IP address in router
+- Update password from default `admin` in Intel Management Engine BIOS Extension
+- Configure DHCP and reserve IP address in router
 
-2. Try out MeshCommander for remote management
+### 2. Set Up MeshCommander
 
-- Download from npm
-- Connect to the reserved IP address of the EliteDesk
-- Use the AMT password set in the previous step
-- Remote control works like a breeze 🎉
+- Install: `npm install -g meshcommander`
+- Connect to reserved IP address
+- Use AMT password from previous step
+- Remote control and power management now available
 
-3. ⛔️ Try using MeshCommander to install Ubuntu Server
+### 3. Install Ubuntu Server
 
-- Used the "Remote Desktop" feature to mount an ISO
-- It doesn't work. Mounting both the `ubuntu-24.04.2-live-server-amd64.iso` and ubuntu `mini.iso` ISOs via MeshCommander IDER feature didn't work.
+**Note**: ISO mounting via MeshCommander IDER doesn't work reliably. Use USB instead.
 
-4. Use a USB drive to install Ubuntu Server
-
-- Download the `ubuntu-24.04.2-live-server-amd64.iso` from the official site
-- Create a bootable USB drive on Mac with [etcher](https://etcher.balena.io/)
-- Boot the EliteDesk from the USB drive and install Ubuntu Server
-- Follow the prompts to set up the server, including network configuration and user accounts.
-- Do not enable lvm for simplicity
-- Import SSH key from github for easy access (Nice feature)
+- Download [Ubuntu Server 24.04 ISO](https://ubuntu.com/download/server)
+- Create bootable USB with [Etcher](https://etcher.balena.io/)
+- Boot from USB and follow installation prompts
+- **Important**: Do not enable LVM for simplicity
+- Import SSH key from GitHub during setup (recommended)
 
 ## Current Services
 
@@ -63,16 +156,18 @@ The homelab runs the following services managed by Ansible:
   - Displays server hostname and IP address
   - Links to all configured services with descriptions
 
-## Ansible setup
+## Ansible Configuration
 
-See [Ansible README](./ansible/README.md)
+For detailed Ansible setup instructions, see [Ansible README](./ansible/README.md)
 
-### notes on AMT and MeshCommander
+### Remote Management Notes
 
-- AMT (Active Management Technology) allows remote management of the system, including power control.
-- Remote desktop works pretty well, but it requires that a screen is connected to the EliteDesk which is a bit annoying.
-- You can still power on the system and access the BIOS remotely without a screen.
-- A DisplayPort emulator (dummy plug) to enable remote desktop via AMT without needing a physical monitor connected.
+**AMT/MeshCommander Tips:**
+
+- AMT allows remote power control and BIOS access without a physical connection
+- Remote desktop requires a screen connected (or DisplayPort dummy plug)
+- Can power on system and access BIOS remotely without a monitor
+- DisplayPort emulator enables remote desktop via AMT without a physical display
 
 ## Remote Access
 
@@ -90,7 +185,7 @@ The homelab uses Tailscale for secure remote access without exposing services to
 #### Configuration
 
 - **Auth Key**: Stored securely in `vault_tailscale_auth_key` (Ansible vault)
-- **Username**: Configurable via `samba_username` variable (default: `daniel`)
+- **Username**: Configurable via `samba_username` variable (default: `<your-username>`)
 - **Password**: Stored securely in `samba_password` (Ansible vault)
 - **Installation**: Managed by Ansible role in the main playbook
 
@@ -112,115 +207,30 @@ The homelab uses Tailscale for secure remote access without exposing services to
 
 Alternative to Tailscale for remote access using traditional port forwarding:
 
-- Use a dynamic DNS service to access the home network remotely with a consistent domain name.
-- Setup router to update the dynamic DNS service with the current public IP address.
-- DuckDNS seems to be a good option for free dynamic DNS.
-- https://www.reddit.com/r/selfhosted/comments/1g8s0sh/seeking_reliable_free_dynamic_dns_noip_vs_duckdns/
-- Nice solution with cutsom domains: https://github.com/timothymiller/cloudflare-ddns
-- Detect your own public IP address with https://www.cloudflare-cn.com/cdn-cgi/trace
+- Use a dynamic DNS service (e.g., DuckDNS) for consistent domain name
+- Configure router to update DNS with current public IP
+- [DDNS comparison discussion](https://www.reddit.com/r/selfhosted/comments/1g8s0sh/seeking_reliable_free_dynamic_dns_noip_vs_duckdns/)
+- [Cloudflare DDNS solution](https://github.com/timothymiller/cloudflare-ddns) for custom domains
+- Detect public IP: <https://www.cloudflare-cn.com/cdn-cgi/trace>
 
-## Hardware Specifications
-
-### HP EliteDesk 800 G4 Mini
-
-**CPU:** Intel Core i5-8500
-**vPro Support:** Yes (AMT/IDER remote management)
-**Form Factor:** Compact mini PC
-**Memory:** 16GB
-**Storage:** 256GB M.2 SSD + 1TB M.2 SSD
-**Expandability:** Additional smaller M.2 slot available for Wi-Fi
-
-### Remote Management
-
-Intel vPro with Active Management Technology (AMT) provides:
-
-- Headless, out-of-band management over LAN
-- Remote control without physical keyboard/screen access
-- Recommended tool: [MeshCommander](https://www.meshcommander.com/)
+## Architecture & Design
 
 ### Design Philosophy
 
-- Docker-first approach
-- Emphasis on simplicity over complex virtualization
-- Balance between resource efficiency and service isolation
-
-## Alternative Hardware Options
-
-### Lenovo ThinkCentre Series
-
-**M920q:** Current generation with USB-C and improved power efficiency
-**M920x:** Enhanced version with discrete GPU options and expanded I/O
-**M720q:** Similar to M920q with older chipset features
-
-### Budget Mini PCs
-
-**Chinese Mini PCs (Celeron N5095/C150Z):**
-
-- Lower power consumption and cost
-- Reduced performance compared to business-class options
-- Suitable for basic media streaming or lightweight Docker workloads
-
-## Operating System Options
-
-### Ubuntu Server
-
-**Primary Choice:** Ubuntu Server
-**Automation:** Ansible for provisioning and configuration management
-**Use Cases:** Docker deployment, Plex setup, general server automation
-
-### Proxmox Virtual Environment
-
-**Advantages:**
-
-- VM and container management interface
-- Snapshot functionality for easy rollbacks
-- Clustering support for multi-node setups
-- Resource isolation between services
-- ZFS integration (ZRAID support)
-- Ideal for experimentation and testing
-
-**Best For:** Services requiring VM isolation (e.g., Home Assistant)
-
-## Virtualization Strategy
-
-### Container-First Approach
-
-**Primary Platform:** Docker with management interfaces
-**Benefits:** Resource efficiency, simplified deployment
-**Limitations:** Some services require OS-level support
-
-### Virtual Machine Use Cases
-
-**Advantages:** Complete isolation, support for special ISOs
-**Considerations:** Higher resource overhead, potential for "pet server" anti-patterns
-**Recommended For:** Services that don't containerize well
-
-## Container Management Platforms
-
-### Portainer
-
-**Type:** Mature container orchestration platform
-**Features:** Kubernetes and Docker Swarm support
-**Target:** Advanced users requiring comprehensive management
-
-### Yacht
-
-**Type:** Template-based container management
-**Features:** Beginner-friendly interface, media server focus
-**Target:** Users wanting simplified deployment
+- **Docker-First**: Containers for most services, VMs only when necessary
+- **Simplicity**: Avoid over-engineering with complex virtualization
+- **Resource Efficiency**: Balance between isolation and performance
+- **Automation**: Everything managed through Ansible
 
 ### Alternative Platforms
 
-**Unraid:** Combined NAS and container/VM platform
-**Coolify:** Self-hosted Heroku alternative
-**Other Options:** CapRover, Piku, Dokku
+**If you're considering other approaches:**
 
-## System Administration
-
-### Web Management Interfaces
-
-**Ubuntu:** No native web UI (Cockpit available as add-on)
-**Proxmox:** Built-in web interface for VM/container management
+- **Proxmox**: VM/container management, snapshots, ZFS support, clustering (best for experimentation)
+- **Unraid**: Combined NAS and container/VM platform
+- **Coolify**: Self-hosted Heroku alternative
+- **Portainer vs Yacht**: Mature orchestration vs beginner-friendly templates
+- **Other Options**: CapRover, Piku, Dokku
 
 ## Storage Architecture
 
@@ -310,8 +320,8 @@ The homelab includes a Samba file server that shares `/opt/docker-data/` with bo
 - **Share Name:** `docker-data`
 - **Path:** `/opt/docker-data/`
 - **Guest Access:** Read-only for anonymous users
-- **Authenticated Access:** Read-write for `daniel` user
-- **Network Restriction:** Limited to 192.168.1.x subnet
+- **Authenticated Access:** Read-write for `<your-username>` user
+- **Network Restriction:** Limited to your local subnet
 
 #### macOS-Specific Samba Settings
 
@@ -360,11 +370,11 @@ This typically indicates:
 
    ```bash
    # Test SMB connection
-   smbutil view //192.168.1.36
+   smbutil view //<your-server-ip>
 
    # Mount share manually
    mkdir ~/mnt/homelab
-   mount -t smbfs //guest@192.168.1.36/docker-data ~/mnt/homelab
+   mount -t smbfs //guest@<your-server-ip>/docker-data ~/mnt/homelab
    ```
 
 4. **Check Samba logs for specific errors:**
@@ -380,34 +390,40 @@ If you see errors like "parse_dfs_path_strict: can't parse hostname from path", 
 
 **From macOS Finder:**
 
-- Press `Cmd+K` and enter: `smb://192.168.1.36/docker-data`
-- Or: `smb://guest@192.168.1.36/docker-data` for explicit guest access
+- Press `Cmd+K` and enter: `smb://<your-server-ip>/docker-data`
+- Or: `smb://guest@<your-server-ip>/docker-data` for explicit guest access
 
 **From macOS Terminal:**
 
 ```bash
 # List available shares
-smbutil view //192.168.1.36
+smbutil view //<your-server-ip>
 
 # Mount with guest access
-mount -t smbfs //guest@192.168.1.36/docker-data /path/to/mount/point
+mount -t smbfs //guest@<your-server-ip>/docker-data /path/to/mount/point
 
 # Mount with authentication
-mount -t smbfs //daniel@192.168.1.36/docker-data /path/to/mount/point
+mount -t smbfs //<your-username>@<your-server-ip>/docker-data /path/to/mount/point
 ```
 
 ## Backups
 
-Still undecided on the backup strategy, but considering the following options:
+### Backup Storage
 
-- [restic](https://github.com/restic/restic) for backup synchronization
-- [BorgBackup](https://github.com/borgbackup/borg)
-- Restic vs BorgBackup: https://github.com/restic/restic/issues/1875
-- https://stickleback.dk/borg-or-restic/
-- Maybe https://github.com/gilbertchen/duplicacy?tab=readme-ov-file
-- https://mangohost.net/blog/duplicacy-vs-restic-vs-borg-which-backup-tool-is-right-in-2025/
-- https://forum.duplicati.com/t/big-comparison-borg-vs-restic-vs-arq-5-vs-duplicacy-vs-duplicati/9952?u=tophee
-- https://forum.duplicacy.com/t/comparison-duplicacy-borg-restic-arq-duplicati/4210/12
+Currently using ZFS for backup storage infrastructure. The backup software/strategy is still being evaluated.
+
+**Software Options Under Consideration:**
+
+- [Restic](https://github.com/restic/restic) - Modern backup with encryption
+- [BorgBackup](https://github.com/borgbackup/borg) - Deduplicating archiver
+- [Duplicacy](https://github.com/gilbertchen/duplicacy) - Lock-free deduplication
+
+**Comparison Resources:**
+
+- [Restic vs Borg Discussion](https://github.com/restic/restic/issues/1875)
+- [Borg or Restic Analysis](https://stickleback.dk/borg-or-restic/)
+- [2025 Backup Tool Comparison](https://mangohost.net/blog/duplicacy-vs-restic-vs-borg-which-backup-tool-is-right-in-2025/)
+- [Community Comparison Discussion](https://forum.duplicati.com/t/big-comparison-borg-vs-restic-vs-arq-5-vs-duplicacy-vs-duplicati/9952)
 
 ### ZFS Backup Storage Implementation
 
@@ -429,6 +445,7 @@ The homelab uses ZFS for the backup storage system with a Terramaster D4-320 USB
 **Mount Point:** `/backup-data`
 
 **Pool-Level Properties:**
+
 - `ashift=12`: Optimized for 4K physical sectors (modern HDDs/SSDs)
 - `autoexpand=on`: Automatically expand pool when larger disks are installed
 - `autoreplace=off`: Manual control over disk replacement
@@ -448,14 +465,15 @@ The pool uses optimized filesystem properties for backup workloads:
 #### Automated Maintenance
 
 **Monthly ZFS Scrub:**
+
 - Scheduled: First day of each month at 2:00 AM
 - Purpose: Verify data integrity and detect silent data corruption
 - Command: `zpool scrub backup-data`
 
 **Automatic Import:**
+
 - Systemd service (`zfs-import.service`) ensures the pool is automatically imported at boot
 - Runs after `systemd-udev-settle.service` to ensure USB devices are available
-
 
 #### Benefits of ZFS for Backups
 
@@ -473,25 +491,25 @@ The pool uses optimized filesystem properties for backup workloads:
 - **Blake3 Checksum:** Modern algorithm offers better performance than SHA256 while maintaining strong data integrity
 - **LZ4 Compression:** Provides good compression ratios with negligible CPU overhead, ideal for backup data
 
-## References
+## Additional Resources
 
-### Documentation
+### Official Documentation
 
 - [HP EliteDesk 800 G4 Support](https://support.hp.com/gb-en/drivers/hp-elitedesk-800-65w-g4-desktop-mini-pc/21353734)
 - [MeshCommander AMT Management](https://www.meshcommander.com/)
 
-### Community Resources
+### Community Discussions
 
-- [Proxmox vs Alternatives Discussion](https://www.reddit.com/r/homelab/comments/1h54vhg/what_are_the_pros_and_cons_for_choosing_proxmox/)
-- [Backup tools](https://www.reddit.com/r/Backup/comments/1gszsvi/list_of_free_open_source_and_crossplatform_backup/)
+- [Proxmox vs Alternatives](https://www.reddit.com/r/homelab/comments/1h54vhg/what_are_the_pros_and_cons_for_choosing_proxmox/)
+- [Open Source Backup Tools](https://www.reddit.com/r/Backup/comments/1gszsvi/list_of_free_open_source_and_crossplatform_backup/)
 
-### Inspiration
+### Inspiration & Guides
 
-- https://perfectmediaserver.com/
+- [Perfect Media Server](https://perfectmediaserver.com/) - Comprehensive homelab media server guide
 
-#### Adding More Drives to the EliteDesk
+### Storage Expansion Options
 
 - [Terramaster D4-320 USB 3.2 DAS Review](https://www.youtube.com/watch?v=ZdEqEWiA2CE)
-- [hp_elitedesk_800_g4_mini_the_ultimate_4drive_setup/](https://www.reddit.com/r/homelab/comments/1e913vb/hp_elitedesk_800_g4_mini_the_ultimate_4drive_setup/)
-- 3D print an enclosure for the EliteDesk: https://makerworld.com/en/models/1399535-thinknas-4x-hdd-nas-enclosure-for-lenovo-m920q#profileId-1589394
-- https://www.reddit.com/r/homelab/comments/1hnniwe/stuffing_4x_ssds_in_a_hp_elitedesk_800_g4_micro/
+- [HP EliteDesk 800 G4 4-Drive Setup](https://www.reddit.com/r/homelab/comments/1e913vb/hp_elitedesk_800_g4_mini_the_ultimate_4drive_setup/)
+- [3D Printed NAS Enclosure for Mini PCs](https://makerworld.com/en/models/1399535-thinknas-4x-hdd-nas-enclosure-for-lenovo-m920q#profileId-1589394)
+- [Stuffing 4x SSDs in HP EliteDesk](https://www.reddit.com/r/homelab/comments/1hnniwe/stuffing_4x_ssds_in_a_hp_elitedesk_800_g4_micro/)

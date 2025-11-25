@@ -145,6 +145,98 @@ Configure SABnzbd to organize downloads into subdirectories that Plex can recogn
 ### Hardware Transcoding
 The Plex container includes `/dev/dri` device mapping for Intel Quick Sync hardware transcoding support on the i5-8500.
 
+## Ansible Vault
+
+Ansible Vault is used to encrypt sensitive data like API keys, passwords, and tokens. This project uses a vault file at `inventories/homelab/group_vars/vault.yml` to store secrets.
+
+### Creating a Vault File
+
+If you need to create a new vault file:
+
+```bash
+ansible-vault create inventories/homelab/group_vars/vault.yml
+```
+
+This will:
+1. Prompt you to create a vault password (save this securely!)
+2. Open your default editor to add encrypted variables
+3. Save and encrypt the file when you exit
+
+Example vault content:
+```yaml
+---
+tailscale_auth_key: "tskey-auth-XXXXXXXXXXXXXXXXXXXX"
+plex_claim_token: "claim-XXXXXXXXXXXXXXXXXXXX"
+```
+
+### Editing an Existing Vault
+
+To edit the encrypted vault file:
+
+```bash
+ansible-vault edit inventories/homelab/group_vars/vault.yml
+```
+
+You'll be prompted for the vault password, then your editor will open with the decrypted contents.
+
+### Viewing Vault Contents
+
+To view the contents without editing:
+
+```bash
+ansible-vault view inventories/homelab/group_vars/vault.yml
+```
+
+### Setting Up Vault Password File
+
+This project is configured to automatically use a password file at `.ansible-vault-password` (see `ansible.cfg`). To set this up:
+
+```bash
+# Create the password file in the ansible directory
+echo "your-vault-password" > .ansible-vault-password
+
+# Secure the file (optional but recommended)
+chmod 600 .ansible-vault-password
+```
+
+**Important:** The `.ansible-vault-password` file is already in `.gitignore` to prevent accidentally committing your vault password to version control.
+
+### Running Playbooks with Vault
+
+With the `.ansible-vault-password` file configured, playbooks will automatically decrypt vault files:
+
+```bash
+# Automatically uses .ansible-vault-password
+ansible-playbook playbooks/site.yml
+```
+
+If you prefer not to use the password file, you can manually specify the vault password:
+
+**Option 1: Prompt for password**
+```bash
+ansible-playbook playbooks/site.yml --ask-vault-pass
+```
+
+**Option 2: Use a different password file**
+```bash
+ansible-playbook playbooks/site.yml --vault-password-file /path/to/password-file
+```
+
+### Changing Vault Password
+
+To change the vault password:
+
+```bash
+ansible-vault rekey inventories/homelab/group_vars/vault.yml
+```
+
+### Common Vault Variables
+
+This project typically stores these sensitive variables in the vault:
+- `tailscale_auth_key`: Tailscale authentication key for mesh VPN
+- `plex_claim_token`: Plex server claim token (optional)
+- Any other API keys or credentials needed by services
+
 ## Troubleshooting
 
 ### Check container status
