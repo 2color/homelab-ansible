@@ -3,7 +3,7 @@
   file:
     path: /backup-data/restic-backups
     state: directory
-    owner: daniel
-    group: daniel
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0700'
   become: true
