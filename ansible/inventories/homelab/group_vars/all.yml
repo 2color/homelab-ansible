@@ -21,4 +21,5 @@ plex_claim_token: "claim-xxxxxxxxxxxxxxxxxxx"  # Get from https://www.plex.tv/cl
 enable_ufw: true
 
 # Data SSD configuration
-data_ssd_device: "/dev/nvme1n1"
+# Use serial number for stable device identification (device names can change between reboots)
+data_ssd_serial: "250726800289"  # Get with: lsblk -o NAME,SERIAL,SIZE,MODEL

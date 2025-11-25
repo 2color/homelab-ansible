@@ -7,9 +7,14 @@
 # - PCI bus scanning order differences
 # UUID-based mounting ensures the correct device is always mounted regardless of device name.
 #
-# REQUIRED: Must be set in inventory
-# data_ssd_device: "/dev/nvme1n1"  # The block device to format and mount
-#                                   # WARNING: All data will be lost if formatted!
+# DEVICE IDENTIFICATION:
+# You must specify EITHER data_ssd_device OR data_ssd_serial (serial is recommended)
+#
+# Option 1 (RECOMMENDED): Identify by serial number (stable across reboots)
+# data_ssd_serial: "250726800289"  # Get with: lsblk -o NAME,SERIAL,SIZE,MODEL
+#
+# Option 2: Direct device path (WARNING: may change between reboots!)
+# data_ssd_device: "/dev/nvme1n1"    # WARNING: All data will be lost if formatted!
 #
 # Optional configuration (defaults shown)
 data_ssd_mount_point: "/mnt/ssd"   # Where to mount the filesystem

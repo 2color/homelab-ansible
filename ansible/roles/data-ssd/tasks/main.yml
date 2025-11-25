@@ -2,12 +2,28 @@
 - name: Validate data SSD configuration
   assert:
     that:
-      - data_ssd_device is defined
-      - data_ssd_device | length > 0
-      - data_ssd_device.startswith('/dev/')
+      - (data_ssd_device is defined and data_ssd_device | length > 0) or (data_ssd_serial is defined and data_ssd_serial | length > 0)
       - data_ssd_mount_point is defined and data_ssd_mount_point.startswith('/')
       - data_ssd_filesystem is defined
-    fail_msg: "Invalid data SSD configuration. data_ssd_device is required and must be set in inventory (e.g., data_ssd_device: '/dev/nvme1n1')"
+    fail_msg: "Invalid data SSD configuration. Either data_ssd_device or data_ssd_serial must be set in inventory"
+
+- name: Find device by serial number
+  shell: |
+    lsblk -ndo NAME,SERIAL | grep '{{ data_ssd_serial }}' | awk '{print "/dev/" $1}'
+  register: device_by_serial
+  changed_when: false
+  when: data_ssd_serial is defined
+  failed_when:
+    - device_by_serial.rc != 0 or device_by_serial.stdout | length == 0
+
+- name: Set device path from serial lookup
+  set_fact:
+    data_ssd_device: "{{ device_by_serial.stdout | trim }}"
+  when: data_ssd_serial is defined
+
+- name: Display identified device
+  debug:
+    msg: "Using device: {{ data_ssd_device }}{{ ' (identified by serial: ' + data_ssd_serial + ')' if data_ssd_serial is defined else '' }}"
 
 - name: Verify target device exists and is block device
   stat:
@@ -47,6 +63,25 @@
   register: ssd_uuid
   changed_when: false
   become: true
+
+- name: Display device UUID information
+  debug:
+    msg: "Device {{ data_ssd_device }} UUID: {{ ssd_uuid.stdout | default('(empty)') }}"
+
+- name: Validate UUID is not empty
+  assert:
+    that:
+      - ssd_uuid.stdout is defined
+      - ssd_uuid.stdout | length > 0
+    fail_msg: |
+      Device {{ data_ssd_device }} does not have a UUID. This usually means:
+      1. The filesystem creation was skipped because the device appears to have a filesystem
+      2. But that filesystem doesn't have a valid UUID
+
+      To fix this, either:
+      - Set data_ssd_force_format=true to force recreation of the filesystem
+      - Manually format the device on the target system
+      - Check if the device is the correct one
 
 - name: Mount the SSD filesystem using UUID
   mount:
