@@ -1,7 +1,7 @@
 ---
 - name: Create Alertmanager config directory
   file:
-    path: /opt/docker-data/alertmanager/config
+    path: "{{ docker_data_path }}/alertmanager/config"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -9,7 +9,7 @@
 
 - name: Create Alertmanager data directory
   file:
-    path: /opt/docker-data/alertmanager/data
+    path: "{{ docker_data_path }}/alertmanager/data"
     state: directory
     owner: "65534"  # nobody user for Alertmanager container
     group: "65534"
@@ -18,7 +18,7 @@
 - name: Deploy Alertmanager configuration
   template:
     src: alertmanager.yml.j2
-    dest: /opt/docker-data/alertmanager/config/alertmanager.yml
+    dest: "{{ docker_data_path }}/alertmanager/config/alertmanager.yml"
     owner: "{{ ansible_user }}"
     group: docker
     mode: '0644'
@@ -37,8 +37,8 @@
       - '--storage.path=/alertmanager'
       - '--web.external-url=http://{{ ansible_hostname }}:{{ alertmanager_port }}'
     volumes:
-      - /opt/docker-data/alertmanager/config:/etc/alertmanager
-      - /opt/docker-data/alertmanager/data:/alertmanager
+      - "{{ docker_data_path }}/alertmanager/config:/etc/alertmanager"
+      - "{{ docker_data_path }}/alertmanager/data:/alertmanager"
     networks:
       - name: homelab-network
     user: "65534:65534"

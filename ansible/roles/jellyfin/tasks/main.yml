@@ -1,7 +1,7 @@
 ---
 - name: Create Jellyfin config directory
   file:
-    path: /opt/docker-data/jellyfin/config
+    path: "{{ docker_data_path }}/jellyfin/config"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -9,7 +9,7 @@
 
 - name: Create Jellyfin cache directory
   file:
-    path: /opt/docker-data/jellyfin/cache
+    path: "{{ docker_data_path }}/jellyfin/cache"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -31,12 +31,12 @@
       PGID: "1000"
       TZ: "{{ timezone | default('UTC') }}"
     volumes:
-      - /opt/docker-data/jellyfin/config:/config
-      - /opt/docker-data/jellyfin/cache:/cache
-      - /opt/docker-data/sabnzbd/downloads:/media
+      - "{{ docker_data_path }}/jellyfin/config:/config"
+      - "{{ docker_data_path }}/jellyfin/cache:/cache"
+      - "{{ docker_data_path }}/sabnzbd/downloads:/media"
       - /data/media/movies:/data/movies
       - /data/media/tv:/data/tv
-      - /opt/docker-data/ytdl-sub:/ytdl-sub
+      - "{{ docker_data_path }}/ytdl-sub:/ytdl-sub"
     networks:
       - name: homelab-network
     devices:

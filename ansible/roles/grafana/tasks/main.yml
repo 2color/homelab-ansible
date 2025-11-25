@@ -1,7 +1,7 @@
 ---
 - name: Create Grafana config directory
   file:
-    path: /opt/docker-data/grafana/config
+    path: "{{ docker_data_path }}/grafana/config"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -9,7 +9,7 @@
 
 - name: Create Grafana data directory
   file:
-    path: /opt/docker-data/grafana/data
+    path: "{{ docker_data_path }}/grafana/data"
     state: directory
     owner: "472"  # grafana user in container
     group: "472"
@@ -23,15 +23,15 @@
     group: docker
     mode: '0755'
   loop:
-    - /opt/docker-data/grafana/config/provisioning
-    - /opt/docker-data/grafana/config/provisioning/datasources
-    - /opt/docker-data/grafana/config/provisioning/dashboards
-    - /opt/docker-data/grafana/config/provisioning/dashboards/dashboards
+    - "{{ docker_data_path }}/grafana/config/provisioning"
+    - "{{ docker_data_path }}/grafana/config/provisioning/datasources"
+    - "{{ docker_data_path }}/grafana/config/provisioning/dashboards"
+    - "{{ docker_data_path }}/grafana/config/provisioning/dashboards/dashboards"
 
 - name: Deploy Grafana datasource configuration (Prometheus)
   template:
     src: datasource-prometheus.yml.j2
-    dest: /opt/docker-data/grafana/config/provisioning/datasources/prometheus.yml
+    dest: "{{ docker_data_path }}/grafana/config/provisioning/datasources/prometheus.yml"
     owner: "{{ ansible_user }}"
     group: docker
     mode: '0644'
@@ -40,7 +40,7 @@
 - name: Deploy Grafana dashboard provider configuration
   template:
     src: dashboard-provider.yml.j2
-    dest: /opt/docker-data/grafana/config/provisioning/dashboards/default.yml
+    dest: "{{ docker_data_path }}/grafana/config/provisioning/dashboards/default.yml"
     owner: "{{ ansible_user }}"
     group: docker
     mode: '0644'
@@ -49,7 +49,7 @@
 - name: Copy Grafana dashboard JSONs from files
   copy:
     src: "{{ item }}"
-    dest: "/opt/docker-data/grafana/config/provisioning/dashboards/dashboards/{{ item | basename }}"
+    dest: "{{ docker_data_path }}/grafana/config/provisioning/dashboards/dashboards/{{ item | basename }}"
     owner: "{{ ansible_user }}"
     group: docker
     mode: '0644'
@@ -65,8 +65,8 @@
     ports:
       - "{{ grafana_port }}:3000"
     volumes:
-      - /opt/docker-data/grafana/config/provisioning:/etc/grafana/provisioning:ro
-      - /opt/docker-data/grafana/data:/var/lib/grafana
+      - "{{ docker_data_path }}/grafana/config/provisioning:/etc/grafana/provisioning:ro"
+      - "{{ docker_data_path }}/grafana/data:/var/lib/grafana"
     networks:
       - name: homelab-network
     env:

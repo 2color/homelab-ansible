@@ -1,7 +1,7 @@
 ---
 - name: Create caddy html directory
   file:
-    path: /opt/docker-data/caddy/html
+    path: "{{ docker_data_path }}/caddy/html"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -10,7 +10,7 @@
 - name: Generate dashboard HTML from template
   template:
     src: index.html.j2
-    dest: /opt/docker-data/caddy/html/index.html
+    dest: "{{ docker_data_path }}/caddy/html/index.html"
     owner: "{{ ansible_user }}"
     group: docker
     mode: '0644'
@@ -25,7 +25,7 @@
     ports:
       - "80:80"
     volumes:
-      - /opt/docker-data/caddy/html:/usr/share/caddy:ro
+      - "{{ docker_data_path }}/caddy/html:/usr/share/caddy:ro"
     networks:
       - name: homelab-network
     command: ["caddy", "file-server", "--root", "/usr/share/caddy", "--listen", ":80"]

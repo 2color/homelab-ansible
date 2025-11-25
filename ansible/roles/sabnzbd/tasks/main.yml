@@ -1,7 +1,7 @@
 ---
 - name: Create SABnzbd config directory
   file:
-    path: /opt/docker-data/sabnzbd/config
+    path: "{{ docker_data_path }}/sabnzbd/config"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -9,7 +9,7 @@
 
 - name: Create SABnzbd downloads directory
   file:
-    path: /opt/docker-data/sabnzbd/downloads
+    path: "{{ docker_data_path }}/sabnzbd/downloads"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -17,7 +17,7 @@
 
 - name: Create SABnzbd incomplete directory
   file:
-    path: /opt/docker-data/sabnzbd/incomplete
+    path: "{{ docker_data_path }}/sabnzbd/incomplete"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -36,9 +36,9 @@
       PGID: "1000"
       TZ: "{{ timezone | default('UTC') }}"
     volumes:
-      - /opt/docker-data/sabnzbd/config:/config
+      - "{{ docker_data_path }}/sabnzbd/config:/config"
       - /data/media:/downloads
-      - /opt/docker-data/sabnzbd/incomplete:/incomplete-downloads
+      - "{{ docker_data_path }}/sabnzbd/incomplete:/incomplete-downloads"
     networks:
       - name: homelab-network
 

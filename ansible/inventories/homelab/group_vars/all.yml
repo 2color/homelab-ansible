@@ -3,6 +3,8 @@
 docker_users:
   - daniel
 
+docker_data_path: /opt/docker-data
+
 docker_daemon_options:
   log-driver: "json-file"
   log-opts:

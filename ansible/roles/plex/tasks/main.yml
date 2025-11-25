@@ -1,7 +1,7 @@
 ---
 - name: Create Plex config directory
   file:
-    path: /opt/docker-data/plex/config
+    path: "{{ docker_data_path }}/plex/config"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -9,7 +9,7 @@
 
 - name: Create Plex transcode directory
   file:
-    path: /opt/docker-data/plex/transcode
+    path: "{{ docker_data_path }}/plex/transcode"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -40,12 +40,12 @@
       VERSION: docker
       PLEX_CLAIM: "{{ plex_claim_token | default('') }}"
     volumes:
-      - /opt/docker-data/plex/config:/config
-      - /opt/docker-data/plex/transcode:/transcode
-      - /opt/docker-data/sabnzbd/downloads:/media
+      - "{{ docker_data_path }}/plex/config:/config"
+      - "{{ docker_data_path }}/plex/transcode:/transcode"
+      - "{{ docker_data_path }}/sabnzbd/downloads:/media"
       - /data/media/movies:/data/movies
       - /data/media/tv:/data/tv
-      - /opt/docker-data/ytdl-sub:/ytdl-sub
+      - "{{ docker_data_path }}/ytdl-sub:/ytdl-sub"
     networks:
       - name: homelab-network
     devices:

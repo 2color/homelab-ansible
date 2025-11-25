@@ -141,6 +141,16 @@ After successful deployment, these services will be available:
 
 ## Configuration
 
+### Docker Data Path
+
+All Docker service data is stored in a configurable directory. The default location is `/opt/docker-data`, but this can be changed by modifying the `docker_data_path` variable in `inventories/homelab/group_vars/all.yml`:
+
+```yaml
+docker_data_path: /opt/docker-data
+```
+
+This path is used by all services for storing configuration, data, and media files.
+
 ### Port Customization
 Each service uses configurable port variables defined in their respective role defaults. To change a service port:
 

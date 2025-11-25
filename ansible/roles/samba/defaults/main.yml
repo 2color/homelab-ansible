@@ -15,7 +15,7 @@ samba_username: "daniel"
 # Share configuration
 samba_shares:
   - name: docker-data
-    path: /opt/docker-data
+    path: "{{ docker_data_path }}"
     comment: "Docker Data Directory"
     # Allow share to appear in network browse lists
     browseable: yes

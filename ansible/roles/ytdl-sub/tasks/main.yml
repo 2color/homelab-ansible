@@ -1,7 +1,7 @@
 ---
 - name: Create ytdl-sub config directory
   file:
-    path: /opt/docker-data/ytdl-sub/config
+    path: "{{ docker_data_path }}/ytdl-sub/config"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -9,7 +9,7 @@
 
 - name: Create ytdl-sub tv_shows directory
   file:
-    path: /opt/docker-data/ytdl-sub/tv_shows
+    path: "{{ docker_data_path }}/ytdl-sub/tv_shows"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -17,7 +17,7 @@
 
 - name: Create ytdl-sub movies directory
   file:
-    path: /opt/docker-data/ytdl-sub/movies
+    path: "{{ docker_data_path }}/ytdl-sub/movies"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -25,7 +25,7 @@
 
 - name: Create ytdl-sub music directory
   file:
-    path: /opt/docker-data/ytdl-sub/music
+    path: "{{ docker_data_path }}/ytdl-sub/music"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -33,7 +33,7 @@
 
 - name: Create ytdl-sub music videos directory
   file:
-    path: /opt/docker-data/ytdl-sub/music_videos
+    path: "{{ docker_data_path }}/ytdl-sub/music_videos"
     state: directory
     owner: "{{ ansible_user }}"
     group: docker
@@ -52,11 +52,11 @@
       PGID: "1000"
       TZ: "{{ timezone | default('UTC') }}"
     volumes:
-      - /opt/docker-data/ytdl-sub/config:/config
-      - /opt/docker-data/ytdl-sub/tv_shows:/tv_shows
-      - /opt/docker-data/ytdl-sub/movies:/movies
-      - /opt/docker-data/ytdl-sub/music_videos:/music_videos
-      - /opt/docker-data/ytdl-sub/music:/music
+      - "{{ docker_data_path }}/ytdl-sub/config:/config"
+      - "{{ docker_data_path }}/ytdl-sub/tv_shows:/tv_shows"
+      - "{{ docker_data_path }}/ytdl-sub/movies:/movies"
+      - "{{ docker_data_path }}/ytdl-sub/music_videos:/music_videos"
+      - "{{ docker_data_path }}/ytdl-sub/music:/music"
     networks:
       - name: homelab-network
 
