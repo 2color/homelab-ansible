@@ -1,6 +1,6 @@
-# Homelab Setup Guide
+# Homelab Ansible Infrastructure Automation
 
-A complete homelab infrastructure setup using Ansible automation for an HP EliteDesk 800 G4 Mini server. This repository contains everything you need to deploy a Docker-based homelab with media services, monitoring, and remote access.
+A complete homelab infrastructure setup using Ansible automation designed for an HP EliteDesk 800 G4 Mini server, but applicable to almost any equivalent hardware. This repository contains everything you need to deploy an Ubuntu-Server-Docker-based homelab with media services, monitoring, and remote access.
 
 - [What's Included](#whats-included)
   - [Core Services](#core-services)
