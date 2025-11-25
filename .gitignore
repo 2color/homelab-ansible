@@ -60,3 +60,5 @@ temp/
 
 .ansible-vault-password
 vault.yml
+
+CLAUDE.md
