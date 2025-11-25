@@ -1,0 +1,11 @@
+vault_tailscale_auth_key: 
+vault_samba_password: 
+vault_nas_username: 
+vault_nas_password: 
+alertmanager_email_from: "user@gmail.com"
+alertmanager_email_to: "user@gmail.com"
+alertmanager_smtp_smarthost: "smtp.gmail.com:587"
+alertmanager_smtp_auth_username: "user@gmail.com"
+alertmanager_smtp_auth_password: "GOOGLE_APP_PASSWORD"
+alertmanager_smtp_require_tls: true
+grafana_admin_password: "GENERATE_PASSWORD"
