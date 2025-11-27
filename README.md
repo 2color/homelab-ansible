@@ -16,10 +16,12 @@ A complete homelab infrastructure setup using Ansible automation designed for an
   - [2. Set Up MeshCommander](#2-set-up-meshcommander)
   - [3. Install Ubuntu Server](#3-install-ubuntu-server)
 - [Current Services](#current-services)
-  - [Core Infrastructure](#core-infrastructure)
-  - [Media Services](#media-services)
-  - [Dashboard](#dashboard)
 - [Ansible Configuration](#ansible-configuration)
+  - [Running Specific Roles](#running-specific-roles)
+  - [Directory Structure](#directory-structure)
+  - [Service Configuration](#service-configuration)
+  - [Ansible Vault](#ansible-vault)
+  - [Troubleshooting](#troubleshooting)
   - [Remote Management Notes](#remote-management-notes)
 - [Remote Access](#remote-access)
   - [Tailscale Mesh VPN](#tailscale-mesh-vpn)
@@ -29,7 +31,6 @@ A complete homelab infrastructure setup using Ansible automation designed for an
   - [Alternative Platforms](#alternative-platforms)
 - [Storage Architecture](#storage-architecture)
   - [Interplay with Synology NAS](#interplay-with-synology-nas)
-  - [File Sharing for Mac Clients](#file-sharing-for-mac-clients)
   - [Samba Configuration for macOS Compatibility](#samba-configuration-for-macos-compatibility)
 - [Backups](#backups)
   - [Backup Storage](#backup-storage)
@@ -39,7 +40,6 @@ A complete homelab infrastructure setup using Ansible automation designed for an
   - [Community Discussions](#community-discussions)
   - [Inspiration \& Guides](#inspiration--guides)
   - [Storage Expansion Options](#storage-expansion-options)
-
 
 ## What's Included
 
@@ -79,31 +79,53 @@ A complete homelab infrastructure setup using Ansible automation designed for an
    cd homelab-ansible
    ```
 
-2. **Configure inventory**
-
-   - Edit `ansible/inventories/homelab/hosts.yml` with your server IP
-   - Update variables in `ansible/inventories/homelab/group_vars/all.yml`
-
-3. **Set up secrets**
+2. **Install required Ansible roles**
 
    ```bash
    cd ansible
-   ansible-vault create inventories/homelab/group_vars/vault.yml
-   # Add your secrets (see vault.example.yml)
+   ansible-galaxy install -r requirements.yml
    ```
 
-4. **Deploy everything**
+3. **Configure inventory**
+
+   Edit `ansible/inventories/homelab/hosts.yml` with your server IP or hostname:
+
+   ```bash
+   # Set `ansible_host` with either the IP or network hostname for SSH connection
+   ```
+
+4. **Configure variables**
+
+   Edit `ansible/inventories/homelab/group_vars/all.yml`:
+
+   - Set timezone
+   - Configure `docker_data_path` (default: `/opt/docker-data`)
+   - Add Plex claim token from https://www.plex.tv/claim/ (optional)
+
+5. **Set up secrets**
+
+   ```bash
+   cd ansible
+   # Copy the example vault file
+   cp inventories/homelab/group_vars/vault.example.yml inventories/homelab/group_vars/vault.yml
+
+   # Encrypt it with your vault password
+   ansible-vault encrypt inventories/homelab/group_vars/vault.yml
+   ```
+
+6. **Update playbook with roles to deploy**
+
+   Edit `ansible/playbooks/site.yml` to enable/disable specific roles as needed.
+
+7. **Deploy everything**
 
    ```bash
    cd ansible
    ansible-playbook playbooks/site.yml --ask-vault-pass
    ```
 
-5. **Access your services**
-   - Dashboard: `http://<server-ip>`
-   - Grafana: `http://<server-ip>:3000` (admin/admin)
-   - Portainer: `http://<server-ip>:9000`
-   - See full service list in the [Current Services](#current-services) section
+8. **Access your services**
+   - Access the dashboard at `http://<server-ip>` for links to all services
 
 ## Hardware Setup
 
@@ -121,7 +143,6 @@ A complete homelab infrastructure setup using Ansible automation designed for an
 
 - **Terramaster D4-320**: USB 3.2 DAS enclosure
 - **Configuration**: 2x drives in ZFS mirror for backups
-- **Optional**: Synology NAS for network storage
 
 ### Alternative Hardware
 
@@ -167,37 +188,280 @@ Follow this [video guide](https://www.youtube.com/watch?v=VcqZ7D9CNg0&t=182s):
 
 ## Current Services
 
-The homelab runs the following services managed by Ansible:
-
-### Core Infrastructure
-
-- **Docker**: Container runtime (geerlingguy.docker role)
-- **Cockpit**: System management web interface (port 9090)
-- **Portainer**: Container management interface (port 9000)
-- **Tailscale**: Mesh VPN for secure remote access
-- **Samba**: File sharing server for `/opt/docker-data/` directory
-- **Synology NAS**: Network-attached storage mounts via systemd units
-
-### Media Services
-
-- **Plex Media Server**: Media streaming with Intel Quick Sync transcoding (port 32400)
-- **Jellyfin**: Open-source media server and streaming platform (port 8096)
-- **SABnzbd**: Usenet downloader (port 8080)
-- **ytdl-sub**: YouTube downloader service (port 8443)
-
-### Dashboard
-
-- **Homelab Dashboard**: Main landing page served by Caddy (port 80)
-  - Uses Caddy Alpine container as a static file server
-  - HTML generated from Jinja2 template (`index.html.j2`)
-  - Template dynamically includes service URLs using Ansible variables
-  - Responsive grid layout with hover effects
-  - Displays server hostname and IP address
-  - Links to all configured services with descriptions
+After deployment, access the homelab dashboard at `http://<server-ip>` (port 80) for links to all configured services including Plex, Grafana, Portainer, Cockpit, and more.
 
 ## Ansible Configuration
 
-For detailed Ansible setup instructions, see [Ansible README](./ansible/README.md)
+### Running Specific Roles
+
+You can run individual roles instead of the entire playbook for targeted deployments:
+
+#### Single Role
+
+```bash
+# Run only the Docker role
+ansible-playbook playbooks/site.yml --tags docker
+
+# Run only the Plex role
+ansible-playbook playbooks/site.yml --tags plex
+
+# Run only the SABnzbd role
+ansible-playbook playbooks/site.yml --tags sabnzbd
+
+# Run only the Portainer role
+ansible-playbook playbooks/site.yml --tags portainer
+
+# Run only the Cockpit role
+ansible-playbook playbooks/site.yml --tags cockpit
+
+# Run only the ytdl-sub role
+ansible-playbook playbooks/site.yml --tags ytdl-sub
+
+# Run only the dashboard role
+ansible-playbook playbooks/site.yml --tags homelab-dashboard
+
+# Run only the Tailscale role
+ansible-playbook playbooks/site.yml --tags tailscale
+
+# Run only the NAS mounting role
+ansible-playbook playbooks/site.yml --tags nas
+```
+
+#### Multiple Roles
+
+```bash
+# Run only media-related services
+ansible-playbook playbooks/site.yml --tags "plex,sabnzbd,ytdl-sub"
+
+# Run only management interfaces
+ansible-playbook playbooks/site.yml --tags "cockpit,portainer,homelab-dashboard"
+```
+
+#### Skip Specific Roles
+
+```bash
+# Run everything except Plex
+ansible-playbook playbooks/site.yml --skip-tags plex
+
+# Skip multiple roles
+ansible-playbook playbooks/site.yml --skip-tags "plex,sabnzbd"
+```
+
+**Note:** Make sure to run the `docker` role first if running individual service roles, as they depend on Docker being installed.
+
+### Directory Structure
+
+All Docker service data is stored in `/opt/docker-data` (configurable via `docker_data_path` variable):
+
+```
+/opt/docker-data/
+├── plex/
+│   ├── config/          # Plex configuration
+│   └── transcode/       # Temporary transcoding files
+├── sabnzbd/
+│   ├── config/          # SABnzbd configuration
+│   ├── downloads/       # Completed downloads (shared with Plex as /media)
+│   └── incomplete/      # Incomplete downloads
+├── ytdl-sub/
+│   ├── config/          # ytdl-sub configuration
+│   ├── tv_shows/        # Downloaded TV shows
+│   ├── movies/          # Downloaded movies
+│   ├── music/           # Downloaded music
+│   └── music_videos/    # Downloaded music videos
+├── caddy/
+│   └── html/            # Dashboard HTML files
+└── portainer_data/      # Portainer configuration (Docker volume)
+```
+
+### Service Configuration
+
+#### Docker Data Path
+
+All Docker service data is stored in a configurable directory. The default location is `/opt/docker-data`, but this can be changed by modifying the `docker_data_path` variable in `ansible/inventories/homelab/group_vars/all.yml`:
+
+```yaml
+docker_data_path: /opt/docker-data
+```
+
+This path is used by all services for storing configuration, data, and media files.
+
+#### Port Customization
+
+Each service uses configurable port variables defined in their respective role defaults. To change a service port:
+
+1. Edit the role's `defaults/main.yml` file:
+
+   - `roles/cockpit/defaults/main.yml` - `cockpit_port: 9090`
+   - `roles/portainer/defaults/main.yml` - `portainer_port: 9000`
+   - `roles/sabnzbd/defaults/main.yml` - `sabnzbd_port: 8080`
+   - `roles/plex/defaults/main.yml` - `plex_port: 32400`
+   - `roles/ytdl-sub/defaults/main.yml` - `ytdl_sub_port: 8443`
+
+2. Re-run the playbook to apply changes
+
+The dashboard automatically uses these port variables and will update when ports change.
+
+#### Plex Setup
+
+1. Get a claim token from https://www.plex.tv/claim/
+2. Add it to `ansible/inventories/homelab/group_vars/all.yml`:
+   ```yaml
+   plex_claim_token: 'claim-XXXXXXXXXXXXXXXXXXXX'
+   ```
+
+#### SABnzbd Categories
+
+Configure SABnzbd to organize downloads into subdirectories that Plex can recognize:
+
+- Movies: `movies/`
+- TV Shows: `tv/`
+- Music: `music/`
+
+#### Hardware Transcoding
+
+The Plex container includes `/dev/dri` device mapping for Intel Quick Sync hardware transcoding support on the i5-8500.
+
+### Ansible Vault
+
+Ansible Vault is used to encrypt sensitive data like API keys, passwords, and tokens. This project uses a vault file at `ansible/inventories/homelab/group_vars/vault.yml` to store secrets.
+
+#### Creating a Vault File
+
+A template is provided at `ansible/inventories/homelab/group_vars/vault.example.yml` showing all required vault variables. To create your vault file:
+
+```bash
+cd ansible
+
+# Copy the example file
+cp inventories/homelab/group_vars/vault.example.yml inventories/homelab/group_vars/vault.yml
+
+# Encrypt it with your vault password
+ansible-vault encrypt inventories/homelab/group_vars/vault.yml
+```
+
+Or create a new vault file from scratch:
+
+```bash
+cd ansible
+ansible-vault create inventories/homelab/group_vars/vault.yml
+```
+
+This will:
+
+1. Prompt you to create a vault password (save this securely!)
+2. Open your default editor to add encrypted variables
+3. Save and encrypt the file when you exit
+
+#### Vault Variables Reference
+
+All variables in `vault.example.yml`:
+
+```yaml
+vault_tailscale_auth_key: # Tailscale auth key for mesh VPN setup
+vault_samba_password: # Samba user password for file sharing
+vault_nas_username: # Synology NAS username for NFS mounts
+vault_nas_password: # Synology NAS password for authentication
+alertmanager_email_from: # Email sender address for alerts
+alertmanager_email_to: # Email recipient address for alerts
+alertmanager_smtp_smarthost: # SMTP server and port (e.g., smtp.gmail.com:587)
+alertmanager_smtp_auth_username: # SMTP authentication username
+alertmanager_smtp_auth_password: # SMTP authentication password (use app password for Gmail)
+alertmanager_smtp_require_tls: # Enable TLS for SMTP connection (true/false)
+grafana_admin_password: # Grafana admin user password
+```
+
+#### Editing an Existing Vault
+
+To edit the encrypted vault file:
+
+```bash
+cd ansible
+ansible-vault edit inventories/homelab/group_vars/vault.yml
+```
+
+You'll be prompted for the vault password, then your editor will open with the decrypted contents.
+
+#### Viewing Vault Contents
+
+To view the contents without editing:
+
+```bash
+cd ansible
+ansible-vault view inventories/homelab/group_vars/vault.yml
+```
+
+#### Setting Up Vault Password File
+
+This project is configured to automatically use a password file at `ansible/.ansible-vault-password` (see `ansible.cfg`). To set this up:
+
+```bash
+cd ansible
+
+# Create the password file
+echo "your-vault-password" > .ansible-vault-password
+
+# Secure the file (recommended)
+chmod 600 .ansible-vault-password
+```
+
+**Important:** The `.ansible-vault-password` file is already in `.gitignore` to prevent accidentally committing your vault password to version control.
+
+#### Running Playbooks with Vault
+
+With the `.ansible-vault-password` file configured, playbooks will automatically decrypt vault files:
+
+```bash
+cd ansible
+# Automatically uses .ansible-vault-password
+ansible-playbook playbooks/site.yml
+```
+
+If you prefer not to use the password file, you can manually specify the vault password:
+
+**Option 1: Prompt for password**
+
+```bash
+cd ansible
+ansible-playbook playbooks/site.yml --ask-vault-pass
+```
+
+**Option 2: Use a different password file**
+
+```bash
+cd ansible
+ansible-playbook playbooks/site.yml --vault-password-file /path/to/password-file
+```
+
+#### Changing Vault Password
+
+To change the vault password:
+
+```bash
+cd ansible
+ansible-vault rekey inventories/homelab/group_vars/vault.yml
+```
+
+### Troubleshooting
+
+#### Check container status
+
+```bash
+ansible homelab-1 -m shell -a "docker ps"
+```
+
+#### View logs
+
+```bash
+ansible homelab-1 -m shell -a "docker logs plex"
+ansible homelab-1 -m shell -a "docker logs sabnzbd"
+ansible homelab-1 -m shell -a "docker logs grafana"
+```
+
+#### Restart services
+
+```bash
+ansible homelab-1 -m shell -a "docker restart plex sabnzbd portainer ytdl-sub homelab-dashboard"
+```
 
 ### Remote Management Notes
 
@@ -256,16 +520,14 @@ Alternative to Tailscale for remote access using traditional port forwarding:
 
 ### Design Philosophy
 
-- **Docker-First**: Containers for most services, VMs only when necessary
+- **Docker-First**: Containers for most services
 - **Simplicity**: Avoid over-engineering with complex virtualization
 - **Resource Efficiency**: Balance between isolation and performance
 - **Automation**: Everything managed through Ansible
 
 ### Alternative Platforms
 
-**If you're considering other approaches:**
-
-- **Proxmox**: VM/container management, snapshots, ZFS support, clustering (best for experimentation)
+- **Proxmox**: VM/container management, snapshots, ZFS support, clustering
 - **Unraid**: Combined NAS and container/VM platform
 - **Coolify**: Self-hosted Heroku alternative
 - **Portainer vs Yacht**: Mature orchestration vs beginner-friendly templates
@@ -318,49 +580,19 @@ cd ansible && ansible-playbook playbooks/site.yml --tags health-check --ask-vaul
 - Large network buffers (1MB read/write)
 - Connection keepalive (`echo_interval=60`)
 - Dynamic user context (uses actual ansible user UID/GID)
-
-**Performance Optimization Update:**
-
-- **Encryption Disabled**: Removed `seal` option to significantly improve transfer speeds
-
-### File Sharing for Mac Clients
-
-When sharing files from the homelab to Mac clients, there are several protocol options with different performance characteristics:
-
-#### NFS (Network File System)
-
-- **Performance:** Generally fastest for large file transfers
-- **macOS Support:** Native support, but requires manual configuration
-- **Setup:** More complex configuration, requires NFS server setup
-- **Use Case:** Best for bulk data transfers and server-to-server communication
-
-#### SMB/CIFS (Server Message Block)
-
-- **Performance:** Good performance, especially SMB3+ with modern implementations.
-- **macOS Support:** Native Finder integration, easy mounting
-
-#### AFP (Apple Filing Protocol)
-
-- **Performance:** Historically optimized for Mac but now deprecated
-- **macOS Support:** Legacy support only (deprecated since macOS 10.9)
-
-#### Performance Considerations
-
-- **macOS Finder Limitations:** Be aware that Finder has known performance issues with network file copies
-- **Reference:** [macOS Finder is still bad at network file copies](https://www.jeffgeerling.com/blog/2024/macos-finder-still-bad-network-file-copies)
-- **Workaround:** Use command-line tools (`rsync`, `cp`) or third-party file managers for better performance
+- **Encryption Disabled**: `seal` option removed to significantly improve transfer speeds
 
 ### Samba Configuration for macOS Compatibility
 
-The homelab includes a Samba file server that shares `/opt/docker-data/` with both guest and authenticated access.
+The homelab includes a Samba file server that provides access to multiple storage locations with different access policies.
 
-#### Configuration Details
+The default shares are configured in [main.yml](./ansible/roles/samba/defaults/main.yml).
 
-- **Share Name:** `docker-data`
-- **Path:** `/opt/docker-data/`
-- **Guest Access:** Read-only for anonymous users
-- **Authenticated Access:** Read-write for `<your-username>` user
-- **Network Restriction:** Limited to your local subnet
+#### Network Access
+
+- **Local Network:** 192.168.1.0/24
+- **Tailscale VPN:** 100.64.0.0/10 (CGNAT range)
+- **All Other Access:** Denied
 
 #### macOS-Specific Samba Settings
 
@@ -429,8 +661,11 @@ If you see errors like "parse_dfs_path_strict: can't parse hostname from path", 
 
 **From macOS Finder:**
 
-- Press `Cmd+K` and enter: `smb://<your-server-ip>/docker-data`
-- Or: `smb://guest@<your-server-ip>/docker-data` for explicit guest access
+- Press `Cmd+K` and enter one of:
+  - `smb://<your-server-ip>/docker-data` (guest read-only or authenticated read-write)
+  - `smb://<your-server-ip>/data` (requires authentication)
+  - `smb://<your-server-ip>/backup-data` (requires authentication)
+- For explicit guest access: `smb://guest@<your-server-ip>/docker-data`
 
 **From macOS Terminal:**
 
@@ -438,24 +673,20 @@ If you see errors like "parse_dfs_path_strict: can't parse hostname from path", 
 # List available shares
 smbutil view //<your-server-ip>
 
-# Mount with guest access
+# Mount docker-data with guest access (read-only)
 mount -t smbfs //guest@<your-server-ip>/docker-data /path/to/mount/point
 
-# Mount with authentication
-mount -t smbfs //<your-username>@<your-server-ip>/docker-data /path/to/mount/point
+# Mount any share with authentication (read-write)
+mount -t smbfs //daniel@<your-server-ip>/docker-data /path/to/mount/point
+mount -t smbfs //daniel@<your-server-ip>/data /path/to/mount/point
+mount -t smbfs //daniel@<your-server-ip>/backup-data /path/to/mount/point
 ```
 
 ## Backups
 
 ### Backup Storage
 
-Currently using ZFS for backup storage infrastructure. The backup software/strategy is still being evaluated.
-
-**Software Options Under Consideration:**
-
-- [Restic](https://github.com/restic/restic) - Modern backup with encryption
-- [BorgBackup](https://github.com/borgbackup/borg) - Deduplicating archiver
-- [Duplicacy](https://github.com/gilbertchen/duplicacy) - Lock-free deduplication
+Currently using ZFS mirror pool for backup storage and Restic as backup tool.
 
 **Comparison Resources:**
 
