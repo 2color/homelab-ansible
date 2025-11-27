@@ -77,7 +77,7 @@
     <div class="container">
         <h1>Homelab Services Dashboard</h1>
         <div class="server-info">
-            <strong>Server:</strong> {{ ansible_hostnamename | default('homelab-1') }}
+            <strong>Server:</strong> {{ ansible_host | default('homelab-1') }}
             (<strong>{{ ansible_hostname }}</strong>)
         </div>
         
