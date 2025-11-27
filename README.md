@@ -10,13 +10,13 @@ A complete homelab infrastructure setup using Ansible automation designed for an
   - [Deployment](#deployment)
 - [Hardware Setup](#hardware-setup)
   - [Recommended Hardware](#recommended-hardware)
-  - [Alternative Hardware](#alternative-hardware)
 - [Initial Hardware Setup](#initial-hardware-setup)
   - [1. Configure vPro/AMT Remote Management](#1-configure-vproamt-remote-management)
   - [2. Set Up MeshCommander](#2-set-up-meshcommander)
   - [3. Install Ubuntu Server](#3-install-ubuntu-server)
 - [Current Services](#current-services)
 - [Ansible Configuration](#ansible-configuration)
+  - [Available Roles](#available-roles)
   - [Running Specific Roles](#running-specific-roles)
   - [Directory Structure](#directory-structure)
   - [Service Configuration](#service-configuration)
@@ -135,28 +135,14 @@ A complete homelab infrastructure setup using Ansible automation designed for an
 
 - **CPU**: Intel Core i5-8500 (with Quick Sync for transcoding)
 - **Memory**: 16GB RAM
-- **Storage**: 256GB M.2 SSD + 1TB M.2 SSD
+- **Storage**: 256GB M.2 SSD + 2TB M.2 SSD
 - **Remote Management**: Intel vPro/AMT support
-- **Form Factor**: Compact mini PC
+- **Form Factor**: mini PC
 
 **Storage Expansion**
 
 - **Terramaster D4-320**: USB 3.2 DAS enclosure
 - **Configuration**: 2x drives in ZFS mirror for backups
-
-### Alternative Hardware
-
-**Lenovo ThinkCentre Series**
-
-- M920q: Current generation, USB-C, efficient
-- M920x: Enhanced with discrete GPU options
-- M720q: Similar specs, older chipset
-
-**Budget Options**
-
-- Chinese mini PCs (Celeron N5095/C150Z)
-- Lower power consumption and cost
-- Suitable for basic streaming and Docker workloads
 
 ## Initial Hardware Setup
 
@@ -191,6 +177,36 @@ Follow this [video guide](https://www.youtube.com/watch?v=VcqZ7D9CNg0&t=182s):
 After deployment, access the homelab dashboard at `http://<server-ip>` (port 80) for links to all configured services including Plex, Grafana, Portainer, Cockpit, and more.
 
 ## Ansible Configuration
+
+### Available Roles
+
+The following roles are available for deployment. Enable or disable roles in [`ansible/playbooks/site.yml`](ansible/playbooks/site.yml) based on your needs:
+
+| Role                 | Description                                                      |
+| -------------------- | ---------------------------------------------------------------- |
+| `geerlingguy.docker` | Installs and configures Docker container runtime                 |
+| `backup-data-zfs`    | Sets up ZFS mirror pool for backup storage on USB DAS            |
+| `data-ssd`           | Configures ext4 and mounts second SSD storage                    |
+| `backup-directory`   | Creates directory structure for Restic backup storage            |
+| `samba`              | Configures file sharing with macOS optimization                  |
+| `docker`             | Customizes Docker daemon configuration                           |
+| `ufw`                | Configures UFW firewall rules                                    |
+| `cockpit`            | Installs system management web interface (port 9090)             |
+| `portainer`          | Deploys container management UI (port 9000)                      |
+| `plex`               | Sets up Plex media server with hardware transcoding (port 32400) |
+| `sabnzbd`            | Configures Usenet downloader (port 8080)                         |
+| `jellyfin`           | Deploys alternative open-source media server (port 8096)         |
+| `ytdl-sub`           | Sets up YouTube content downloader and organizer (port 8443)     |
+| `node-exporter`      | Installs host metrics exporter for Prometheus (port 9100)        |
+| `cadvisor`           | Deploys container metrics exporter (port 8081)                   |
+| `prometheus`         | Sets up metrics collection and time-series database (port 9091)  |
+| `alertmanager`       | Configures alert routing and management (port 9093)              |
+| `grafana`            | Deploys monitoring dashboards and visualization (port 3000)      |
+| `homelab-dashboard`  | Creates custom landing page with service links (port 80)         |
+| `synology-nas`       | Configures Synology NAS integration via SMB mounts               |
+| `tailscale`          | Sets up mesh VPN for secure remote access                        |
+
+**Note:** Roles are typically deployed in the order listed above. The `geerlingguy.docker` role must be run before any containerized services.
 
 ### Running Specific Roles
 
@@ -699,7 +715,7 @@ Currently using ZFS mirror pool for backup storage and Restic as backup tool.
 
 The homelab uses ZFS for the backup storage system with a Terramaster D4-320 USB 3.2 DAS (Direct Attached Storage) enclosure containing two disks configured in a mirror configuration.
 
-#### Hardware Setup
+#### Backup Hardware
 
 - **DAS Enclosure:** Terramaster D4-320 USB 3.2
 - **Connection:** USB 3.2 connection to HP EliteDesk
@@ -719,47 +735,6 @@ The homelab uses ZFS for the backup storage system with a Terramaster D4-320 USB
 - `ashift=12`: Optimized for 4K physical sectors (modern HDDs/SSDs)
 - `autoexpand=on`: Automatically expand pool when larger disks are installed
 - `autoreplace=off`: Manual control over disk replacement
-
-#### ZFS Dataset Properties
-
-The pool uses optimized filesystem properties for backup workloads:
-
-- **compression: lz4** - Fast compression reduces storage usage with minimal CPU overhead
-- **atime: off** - Disabled access time updates to reduce write amplification
-- **checksum: blake3** - Modern, fast checksum algorithm for data integrity verification
-- **primarycache: all** - Cache both metadata and data in ARC (RAM)
-- **secondarycache: all** - Use L2ARC if available for extended caching
-- **sync: standard** - Standard synchronous write handling
-- **recordsize: 128k** - Balanced block size for mixed backup workloads
-
-#### Automated Maintenance
-
-**Monthly ZFS Scrub:**
-
-- Scheduled: First day of each month at 2:00 AM
-- Purpose: Verify data integrity and detect silent data corruption
-- Command: `zpool scrub backup-data`
-
-**Automatic Import:**
-
-- Systemd service (`zfs-import.service`) ensures the pool is automatically imported at boot
-- Runs after `systemd-udev-settle.service` to ensure USB devices are available
-
-#### Benefits of ZFS for Backups
-
-- **Data Integrity:** Blake3 checksums detect silent data corruption
-- **Compression:** LZ4 compression reduces storage requirements automatically
-- **Redundancy:** Mirror configuration survives single disk failure
-- **Snapshots:** Fast, space-efficient snapshots for point-in-time recovery
-- **Self-Healing:** Automatically repairs corrupted data using mirror copy
-- **Easy Expansion:** Add drives or replace with larger ones seamlessly
-
-#### Design Decisions
-
-- **Mirror vs RAIDZ:** Chose mirror for better random I/O performance and simpler disk replacement
-- **USB Connection:** Acceptable for backup workloads; provides flexibility for future expansion
-- **Blake3 Checksum:** Modern algorithm offers better performance than SHA256 while maintaining strong data integrity
-- **LZ4 Compression:** Provides good compression ratios with negligible CPU overhead, ideal for backup data
 
 ## Additional Resources
 

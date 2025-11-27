@@ -68,7 +68,7 @@ This is a homelab configuration repository for an HP EliteDesk 800 G4 Mini serve
 1. `geerlingguy.docker` - Docker installation and configuration
 2. `backup-data-zfs` - ZFS pool setup for backups
 3. `data-ssd` - SSD storage mount configuration
-4. `backup-storage` - Automated ZFS snapshots and replication
+4. `backup-directory` - Creates directory structure for Restic backup storage
 5. `samba` - File sharing service
 6. `docker` - Docker daemon customization
 7. `ufw` - Firewall configuration
