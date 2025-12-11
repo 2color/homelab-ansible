@@ -72,12 +72,12 @@
     tailscale up
     {% if vault_tailscale_auth_key is defined %}--authkey={{ vault_tailscale_auth_key }}{% endif %}
     {% if tailscale_advertise_routes %}--advertise-routes={{ tailscale_advertise_routes | join(',') }}{% endif %}
-    {% if tailscale_accept_routes %}--accept-routes{% endif %}
-    {% if tailscale_accept_dns %}--accept-dns{% endif %}
+    {{ '--accept-routes' if tailscale_accept_routes else '--accept-routes=false' }}
+    {{ '--accept-dns' if tailscale_accept_dns else '--accept-dns=false' }}
     {% if tailscale_hostname %}--hostname={{ tailscale_hostname }}{% endif %}
-    {% if tailscale_shields_up %}--shields-up{% endif %}
-    {% if tailscale_exit_node %}--advertise-exit-node{% endif %}
-    {% if tailscale_ssh %}--ssh{% endif %}
+    {{ '--shields-up' if tailscale_shields_up else '--shields-up=false' }}
+    {{ '--advertise-exit-node' if tailscale_exit_node else '--advertise-exit-node=false' }}
+    {{ '--ssh' if tailscale_ssh else '--ssh=false' }}
   become: true
   when: vault_tailscale_auth_key is defined
   register: tailscale_config_result
